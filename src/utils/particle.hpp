@@ -1,3 +1,4 @@
+#pragma once
 class particle{
 public:
     int id;
