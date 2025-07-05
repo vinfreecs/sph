@@ -49,7 +49,13 @@ void readInput(const std::string &filename, int nParticles, std::vector<particle
     for (int i = 0; i < nParticles; ++i)
     {
         file >> particles[i].vel_x >> particles[i].vel_y >> particles[i].vel_z;
+
     }
+
+    for(int i=0; i<nParticles;i++){
+        particles[i].id = i;
+    }
+    
 
     file.close();
 }
