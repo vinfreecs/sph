@@ -7,15 +7,16 @@ void update_buckets(std::vector<particle>& particles, std::vector<std::vector<in
         sph_float z = particles[i].pos_z + (sph_float)boundary/2;
         if(x < 0 || x > boundary || y < 0 || y > boundary || z < 0 || z > boundary){
             std::cerr<<"Particle "<<i<<" is out of bounds. Please check the input file."<<std::endl;
+            std::cerr<<"x: "<<x<<" y: "<<y<<" z: "<<z<<" bucket_idx: "<<std::endl;
+            std::cerr<<"nBuckets: "<<nBuckets<<" boundary: "<<boundary<<std::endl;
             continue;
         }
         int bucket_idx = (int)(x/r_e) + int(y/r_e)*nBuckets + int(z/r_e)*nBuckets*nBuckets;
-        if(bucket_idx > nBuckets*nBuckets*nBuckets || bucket_idx < 0){
-            std::cerr<<"Particle "<<i<<" is out of bounds. Please check the input file."<<std::endl;
-            continue;
-        }
+        
         if(bucket_idx > nBuckets*nBuckets*nBuckets-1 || bucket_idx < 0){
             std::cerr<<"Particle "<<i<<" is out of bounds. Please check the input file."<<std::endl;
+            std::cerr<<"x: "<<x<<" y: "<<y<<" z: "<<z<<" bucket_idx: "<<bucket_idx<<std::endl;
+            std::cerr<<"nBuckets: "<<nBuckets<<" boundary: "<<boundary<<std::endl;
             continue;
             
         }
@@ -41,6 +42,29 @@ void update_buckets(std::vector<particle>& particles, std::vector<std::vector<in
     }
     
 }
+
+std::vector<int> get_neighbours(int idx, int n) {
+    int x = idx % n;
+    int y = (idx / n) % n;
+    int z = idx / (n * n);
+
+    std::vector<int> neighbors;
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int nx = x + dx;
+                int ny = y + dy;
+                int nz = z + dz;
+                if (nx >= 0 && ny >= 0 && nz >= 0 && nx < n && ny < n && nz < n) {
+                    int neighbor_idx = nx + ny * n + nz * n * n;
+                    neighbors.push_back(neighbor_idx);
+                }
+            }
+        }
+    }
+    return neighbors;
+}
+
 
 sph_float distance_squared(particle p, particle q){
     sph_float dx = p.pos_x -q.pos_x;
@@ -68,14 +92,15 @@ sph_float smoothing_viscosity(sph_float r){
 }
 
 sph_float smoothing_density(sph_float r){
+    r = std::sqrt(r);
     if(r<r_e){
-        sph_float val = 315*std::pow((r_e*r_e - r),3)/(64 * PI * std::pow(r_e,9));
+        sph_float val = 315*std::pow((r_e*r_e - r*r),3)/(64 * PI * std::pow(r_e,9));
         return val;
     }
     else return 0.0;
 }
 
-void boundary_navie(particle &p, double boundary=3, double bounce_factor = 0.05)
+void boundary_navie(particle &p, double boundary=3, double bounce_factor = 0.25)
 {
     double hole_size = 0.5;
     double half_boundary = boundary / 2.0;
@@ -128,9 +153,9 @@ void pressure_viscosity_force(particle& p, particle& q){
 
     sph_float w_r_pressure = smoothing_pressure(r);
     sph_float w_r_viscosity = smoothing_viscosity(r);
-    sph_float force_pressure_x = q.mass*(p.pressure + q.pressure)* w_r_pressure * (p.pos_x -q.pos_x) / (2* q.density);
-    sph_float force_pressure_y = q.mass*(p.pressure + q.pressure)* w_r_pressure * (p.pos_y -q.pos_y) / (2* q.density);
-    sph_float force_pressure_z = q.mass*(p.pressure + q.pressure)* w_r_pressure * (p.pos_z -q.pos_z) / (2* q.density);
+    sph_float force_pressure_x = q.mass*(p.pressure + q.pressure)* w_r_pressure * (q.pos_x -p.pos_x) / (2* q.density);//TODO
+    sph_float force_pressure_y = q.mass*(p.pressure + q.pressure)* w_r_pressure * (q.pos_y -p.pos_y) / (2* q.density);
+    sph_float force_pressure_z = q.mass*(p.pressure + q.pressure)* w_r_pressure * (q.pos_z -p.pos_z) / (2* q.density);
     sph_float force_viscosity_x = q.mass*(q.vel_x - p.vel_x) * w_r_viscosity /(q.density);
     sph_float force_viscosity_y = q.mass*(q.vel_y - p.vel_y) * w_r_viscosity /(q.density);
     sph_float force_viscosity_z = q.mass*(q.vel_z - p.vel_z) * w_r_viscosity /(q.density);
@@ -160,10 +185,31 @@ void calculate_density(std::vector<particle>& particles){
     }
 }
 
-void calculate_pressure(std::vector<particle>& particles, sph_float k =0.1, sph_float rho_o = 1000.0, sph_float rest_pressure = 0.0){
+void calculate_density_buckets(std::vector<particle>& particles, std::vector<std::vector<int>>& buckets,int nBuckets){
+    for(auto& p :particles){
+        p.density = 0.0;
+        int p_bucket_id = p.bucket_id;
+        std::vector<int> neighbour_buckets = get_neighbours(p_bucket_id,nBuckets);
+        for(int j = 0; j<neighbour_buckets.size(); j++){
+            int neighbour_bucket_id = neighbour_buckets[j];
+            if(neighbour_bucket_id < 0 || neighbour_bucket_id >= nBuckets*nBuckets*nBuckets) continue;
+            for(int k =0 ; k<buckets[neighbour_bucket_id].size();k++){
+                particle &q = particles[buckets[neighbour_bucket_id][k]];
+                // sph_float dx = p.pos_x - q.pos_x;
+                // sph_float dy = p.pos_y - q.pos_y;
+                // sph_float dz = p.pos_z - q.pos_z;
+                sph_float r_dist_squared = distance_squared(p, q);
+                sph_float w_r = smoothing_density(r_dist_squared);
+                p.density += q.mass * (w_r);
+            }
+        }
+    }
+}
+
+void calculate_pressure(std::vector<particle>& particles, sph_float k =3, sph_float rho_o = 998.29, sph_float rest_pressure = 10.0){
     for(auto & p: particles){
         p.pressure = rest_pressure + k * (p.density - rho_o);
-        std::cout<<"Particle "<<p.id<<" density :"<<p.density<<" pressure :"<<rest_pressure + k * (p.density - rho_o)<<std::endl;
+        //std::cout<<"Particle "<<p.id<<" density :"<<p.density<<" pressure :"<<rest_pressure + k * (p.density - rho_o)<<std::endl;
     }
 }
 
@@ -183,7 +229,7 @@ void calculate_force(std::vector<particle>& particles){
             }
             
         }
-        p.force_z -= p.mass * gravity; // gravity only in the -ve z direction
+        p.force_z -= p.density * gravity; // gravity only in the -ve z direction
     }
 }
 
@@ -219,27 +265,6 @@ void calculate_force(std::vector<particle>& particles){
 //     return neighbour_buckets;
 // }
 
-std::vector<int> get_neighbours(int idx, int n) {
-    int x = idx % n;
-    int y = (idx / n) % n;
-    int z = idx / (n * n);
-
-    std::vector<int> neighbors;
-    for (int dx = -1; dx <= 1; dx++) {
-        for (int dy = -1; dy <= 1; dy++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                int nx = x + dx;
-                int ny = y + dy;
-                int nz = z + dz;
-                if (nx >= 0 && ny >= 0 && nz >= 0 && nx < n && ny < n && nz < n) {
-                    int neighbor_idx = nx + ny * n + nz * n * n;
-                    neighbors.push_back(neighbor_idx);
-                }
-            }
-        }
-    }
-    return neighbors;
-}
 
 void calculate_force_buckets(std::vector<particle>& particles, std::vector<std::vector<int>>& buckets, int nBuckets){
     // Force = gravity_force + pressure_force + viscosity_force
@@ -260,16 +285,17 @@ void calculate_force_buckets(std::vector<particle>& particles, std::vector<std::
                 if(p.id < q.id) pressure_viscosity_force(p,q);
             }
         }
-        p.force_z -= p.mass * gravity; // gravity only in the -ve z direction
+        p.force_z -= p.density * gravity; // gravity only in the -ve z direction 
+        //TODO
     }
 }
 
 void update_velocity(std::vector<particle>& particles, sph_float dt){
     for(auto &p : particles){
         //std::cout <<"Force x :"<<p.force_x<<" y :"<<p.force_y<<" z :"<<p.force_z<<std::endl;
-        p.vel_x += p.force_x*dt/p.mass;
-        p.vel_y += p.force_y*dt/p.mass;
-        p.vel_z += p.force_z*dt/p.mass;
+        p.vel_x += p.force_x*dt/p.density;
+        p.vel_y += p.force_y*dt/p.density;
+        p.vel_z += ((p.force_z/p.density))*dt;
 
     }
 }

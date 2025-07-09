@@ -4,7 +4,7 @@ project(sph LANGUAGES CXX)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+set(CMAKE_BUILD_TYPE Release)
 # Add all .cpp files in src/ as source files
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
