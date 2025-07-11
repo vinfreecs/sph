@@ -9,4 +9,5 @@ public:
     float density;
     float pressure;
     float force_x, force_y, force_z;
+    bool fix;
 };

@@ -12,10 +12,10 @@ int main(){
     particle p;
     sph_float volume = (4.0/3.0) * 3.14 * radius * radius * radius;
 
-    write_particles_cube_format("../input/pos_125.txt", 5, 0.5);
-    int nParticles =8000;
+    write_particles_cube_format("../input/pos_30.txt", 30, 0.5);
+    int nParticles =27000;
     std::vector<particle> particles(nParticles);
-    readInput("../input/pos_20.txt",nParticles,particles);
+    readInput("../input/pos_30.txt",nParticles,particles);
     int boundary = 3;
     int nBuckets = ceil(boundary/r_e);
     std::vector<std::vector<int>> buckets(nBuckets*nBuckets*nBuckets); //neighbours 3 is the boundary and 0.006 is the smoothing length effective radius etc
@@ -34,6 +34,7 @@ int main(){
         calculate_pressure(particles);
         //calculate_force(particles);
         calculate_force_buckets(particles,buckets, nBuckets);
+        apply_repulsive_boundary_force(particles, buckets, nBuckets);
         update_velocity(particles,dt);
         update_positions(particles,dt);
         auto end = std::chrono::high_resolution_clock::now();

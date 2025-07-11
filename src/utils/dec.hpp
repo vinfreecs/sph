@@ -6,3 +6,6 @@ sph_float PI = 3.14;
 sph_float dynamic_viscosity = 0.001;
 sph_float gravity = 9.8;
 sph_float radius = 0.1;
+
+inline sph_float rho0 = 1000.0f;           // Rest density
+inline sph_float c0 = 10.0f;

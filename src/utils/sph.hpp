@@ -309,3 +309,55 @@ void update_positions(std::vector<particle>& particles, sph_float dt){
     }
 }
 
+void apply_repulsive_boundary_force(
+    std::vector<particle>& particles,
+    const std::vector<std::vector<int>>& neighbor_buckets,
+    int nBuckets
+) {
+    int N = particles.size();
+
+    for (int a = 0; a < N; ++a) {
+        if (!particles[a].fix) {
+            particle& pa = particles[a];
+            int bucket_id = pa.bucket_id;
+            std::vector<int> neighbours = get_neighbours(bucket_id, nBuckets);
+
+            for (int b_bucket : neighbours) {
+                if (b_bucket < 0 || b_bucket >= nBuckets * nBuckets * nBuckets) continue;
+
+                for (int b_index : neighbor_buckets[b_bucket]) {
+                    particle& pb = particles[b_index];
+                    sph_float dist = distance_squared(pa,pb);
+                    if (dist<r_e*r_e) { // boundary particle
+
+                        float dx = pa.pos_x - pb.pos_x;
+                        float dy = pa.pos_y - pb.pos_y;
+                        float dz = pa.pos_z - pb.pos_z;
+
+                        float r2 = dx*dx + dy*dy + dz*dz;
+                        if (r2 > r_e * r_e) continue;
+
+                        float r = std::sqrt(r2);
+                        if (r < 1e-5f) r = 1e-5f;
+
+                        // === Explicit spiky gradient ===
+                        float gradW_scalar = 45.0f * std::pow(r_e - r, 2) / (PI * std::pow(r_e, 6));
+                        float inv_r = 1.0f / r;
+
+                        float rho_a = pa.density;
+                        float rho_b = pb.density;
+                        float m_b = pb.mass;
+
+                        float term_a = (rho_a - rho0) / (rho_a * rho_a);
+                        float term_b = (rho_b - rho0) / (rho_b * rho_b);
+                        float coeff = -m_b * c0 * c0 * (term_a + term_b) * gradW_scalar * inv_r;
+
+                        pa.force_x += coeff * dx;
+                        pa.force_y += coeff * dy;
+                        pa.force_z += coeff * dz;
+                    }
+                }
+            }
+        }
+    }
+}
