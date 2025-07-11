@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/libomp/lib -L/opt/homebrew/opt/libomp/lib CMakeFiles/OpenGLApp.dir/src/main.cpp.o -o OpenGLApp   -L/opt/homebrew/opt/glfw/lib  -Wl,-rpath,/opt/homebrew/opt/glfw/lib -lglfw -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
