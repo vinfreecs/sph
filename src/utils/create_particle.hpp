@@ -6,7 +6,7 @@
 
 void write_particles_cube_format(
     const std::string& filename,
-    int particles_per_axis,
+    int total_particles,
     double cube_size,
     double mass = 1.0,
     double vx = 0.0, double vy = 0.0, double vz = 0.0
@@ -17,18 +17,21 @@ void write_particles_cube_format(
         return;
     }
 
-    double spacing = cube_size / (particles_per_axis - 1);
-    int total_particles = particles_per_axis * particles_per_axis * particles_per_axis;
+    // Calculate how many particles fit along each axis
+    int particles_per_axis = static_cast<int>(std::ceil(std::cbrt(total_particles)));
+    double spacing = cube_size / particles_per_axis;
 
     // Write positions
     file << "positions\n";
-    for (int i = 0; i < particles_per_axis; ++i) {
-        for (int j = 0; j < particles_per_axis; ++j) {
-            for (int k = 0; k < particles_per_axis; ++k) {
-                double x = i * spacing;
-                double y = j * spacing;
-                double z = k * spacing;
+    int particles_written = 0;
+    for (int i = 0; i < particles_per_axis && particles_written < total_particles; ++i) {
+        for (int j = 0; j < particles_per_axis && particles_written < total_particles; ++j) {
+            for (int k = 0; k < particles_per_axis && particles_written < total_particles; ++k) {
+                double x = i * spacing + spacing/2;  // Center particles in their cells
+                double y = j * spacing + spacing/2;
+                double z = k * spacing + spacing/2;
                 file << x << " " << y << " " << z << "\n";
+                particles_written++;
             }
         }
     }

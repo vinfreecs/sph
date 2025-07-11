@@ -70,12 +70,11 @@ sph_float distance_squared(particle p, particle q){
     sph_float dx = p.pos_x -q.pos_x;
     sph_float dy = p.pos_y -q.pos_y;
     sph_float dz = p.pos_z -q.pos_z;
-    sph_float r_dist = dx*dx + dy*dy+dz*dz;
+    sph_float r_dist = dx*dx + dy*dy + dz*dz;
     return r_dist;
 }
 
 sph_float smoothing_pressure(sph_float r){
-    if(r < 1e-5) r = 1e-5; // to avoid division by zero
     if(r < r_e ){
         sph_float val = 45 * std::pow(r_e - r,3)/(PI * std::pow(r_e,6)* r);
         return val;
@@ -84,7 +83,7 @@ sph_float smoothing_pressure(sph_float r){
 }
 
 sph_float smoothing_viscosity(sph_float r){
-    if(r_e > r){
+    if(r < r_e){
         sph_float val = 45 * (r_e-r)/(PI * std::pow(r_e,6));
         return val;
     }
@@ -285,7 +284,7 @@ void calculate_force_buckets(std::vector<particle>& particles, std::vector<std::
                 if(p.id < q.id) pressure_viscosity_force(p,q);
             }
         }
-        p.force_z -= p.density * gravity; // gravity only in the -ve z direction 
+        p.force_z -= p.mass * gravity; // gravity only in the -ve z direction 
         //TODO
     }
 }
