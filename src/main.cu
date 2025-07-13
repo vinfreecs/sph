@@ -4,6 +4,8 @@
 #include <vector>
 #include <iomanip>
 #include <cmath>
+#include <string>
+#include <cuda_runtime.h>
 #include "utils/config.hpp"
 #include "utils/particle.hpp"
 #include "utils/io.hpp"
@@ -15,9 +17,9 @@ int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
     // write_particles_cube_format("../input/pos_150.txt", 150, 0.5);
-    int nParticles = 1000;
+    int nParticles = 8000;
     std::vector<particle> particles(nParticles);
-    readInput("../input/pos_10.txt", nParticles, particles);
+    readInput("../input/pos_20.txt", nParticles, particles);
 
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
@@ -40,6 +42,7 @@ int main()
     checkCudaError(cudaMemcpy(d_particle_neighbours, particle_neighbours.data(), size_int, cudaMemcpyHostToDevice));
 
 
+
     int threadsPerBlock = 256;
     int blocksPerGrid = (nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -57,17 +60,17 @@ int main()
         checkCudaError(cudaMemset(d_particle_neighbours, -1, size_int));
 
         update_neighbors_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, d_neighbours, d_particle_neighbours, nParticles);
-        checkCudaError(cudaDeviceSynchronize(), true);
-        calculation_density_pressure_hash<<<blocksPerGrid, threadsPerBlock>>>(d_particles, d_neighbours, d_particle_neighbours, nParticles);
-        checkCudaError(cudaDeviceSynchronize(), true);
+        checkCudaError(cudaDeviceSynchronize());
+        compute_density_pressure_hash_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, d_neighbours, d_particle_neighbours, nParticles);
+        checkCudaError(cudaDeviceSynchronize());
         // removed reset as alredy setting force to zero in force kernel
 
         calculate_force_hash_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, d_neighbours, d_particle_neighbours, nParticles);
-        checkCudaError(cudaDeviceSynchronize(), true);
+        checkCudaError(cudaDeviceSynchronize());
         update_velocity_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, nParticles, dt);
-        checkCudaError(cudaDeviceSynchronize(), true);
+        checkCudaError(cudaDeviceSynchronize());
         update_positions_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, nParticles, dt);
-        checkCudaError(cudaDeviceSynchronize(), true);
+        checkCudaError(cudaDeviceSynchronize());
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         total_time += elapsed.count();

@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <cuda_runtime.h> 
+
 
 #define checkCudaError(...) \
     checkCudaErrorImpl(__FILE__, __LINE__, __VA_ARGS__)

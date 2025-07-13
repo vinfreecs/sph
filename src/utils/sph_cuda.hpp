@@ -1,4 +1,4 @@
-__device__ float distance_squared(Particle p, Particle q)
+__device__ float distance_squared(particle p, particle q)
 {
     float dx = p.pos_x - q.pos_x;
     float dy = p.pos_y - q.pos_y;
@@ -34,7 +34,7 @@ __device__ float smoothing_density(float r_squared)
     return 0.0f;
 }
 
-__global__ void reset_forces(Particle *particles, int n)
+__global__ void reset_forces(particle *particles, int n)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
@@ -122,7 +122,7 @@ __device__ int get_hash(int cell_x, int cell_y, int cell_z)
 }
 
 __global__ void update_neighbors_kernel(
-    Particle *particles,
+    particle *particles,
     int *neighbours,
     int *particle_neighbours,
     int num_particles)
@@ -131,7 +131,7 @@ __global__ void update_neighbors_kernel(
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= num_particles)
         return;
-    Particle p = particles[i];
+    particle p = particles[i];
     int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
     int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
     int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
@@ -145,7 +145,7 @@ __global__ void update_neighbors_kernel(
 }
 
 __global__ void compute_density_pressure_hash_kernel(
-    Particle *particles,
+    particle *particles,
     const int *neighbours,
     const int *particle_neighbours,
     int num_particles)
@@ -154,7 +154,7 @@ __global__ void compute_density_pressure_hash_kernel(
     if (i >= num_particles)
         return;
 
-    Particle &p = particles[i];
+    particle &p = particles[i];
     p.density = 0.0f;
     p.pressure = 0.0f;
 
@@ -179,7 +179,7 @@ __global__ void compute_density_pressure_hash_kernel(
                 int j = neighbours[cell_id];
                 while (j != -1)
                 {
-                    Particle &q = particles[j];
+                    particle &q = particles[j];
                     float r_sq = distance_squared(p, q);
                     float w_r = smoothing_density(r_sq);
                     p.density += q.mass * w_r;
