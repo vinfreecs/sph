@@ -17,9 +17,9 @@ int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
     // write_particles_cube_format("../input/pos_150.txt", 150, 0.5);
-    int nParticles = 8000;
+    int nParticles = 100000;
     std::vector<particle> particles(nParticles);
-    readInput("../input/pos_20.txt", nParticles, particles);
+    readInput("../input/pos_100000.txt", nParticles, particles);
 
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
@@ -49,7 +49,7 @@ int main()
     sph_float dt = 0.01f;
     sph_float time = 10.0f;
     std::string file_name_out = generateVTKFilename(0);
-    file_name_out = "../output/" + file_name_out;
+    file_name_out = "../output/out_100k/" + file_name_out;
     writeVTK(file_name_out, particles);
     sph_float total_time = 0;
     for (int t = 0; t < time / dt; t++)
@@ -79,7 +79,7 @@ int main()
         {
             cudaMemcpy(particles.data(), d_particles, size_particles, cudaMemcpyDeviceToHost);
             std::string file_name = generateVTKFilename(t + 1);
-            file_name = "../output/" + file_name;
+            file_name = "../output/out_100k/" + file_name;
             writeVTK(file_name, particles);
         }
     }
