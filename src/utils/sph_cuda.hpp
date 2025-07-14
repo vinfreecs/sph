@@ -48,58 +48,15 @@ __global__ void reset_forces(particle *particles, int n)
     }
 }
 
-__device__ void boundary_navie(particle &p, double bounce_factor = 0.25)
-{
-    double hole_size = 0.5;
-    double half_boundary = boundary / 2.0;
-    double half_hole = hole_size / 2.0;
-
-    // X-axis
-    if (p.pos_x - radius < -half_boundary)
-    {
-        p.pos_x = -half_boundary + radius;
-        p.vel_x *= -bounce_factor;
-    }
-
-    else if (p.pos_x + radius > half_boundary)
-    {
-        p.pos_x = half_boundary - radius;
-        p.vel_x *= -bounce_factor;
-    }
-
-    // Y-axis
-    if (p.pos_y - radius < -half_boundary)
-    {
-        p.pos_y = -half_boundary + radius;
-        p.vel_y *= -bounce_factor;
-    }
-    else if (p.pos_y + radius > half_boundary)
-    {
-        p.pos_y = half_boundary - radius;
-        p.vel_y *= -bounce_factor;
-    }
-
-    // Z-axis
-    if (p.pos_z - radius < -half_boundary)
-    {
-        p.pos_z = -half_boundary + radius;
-        p.vel_z *= -bounce_factor;
-    }
-    else if (p.pos_z + radius > half_boundary)
-    {
-        p.pos_z = half_boundary - radius;
-        p.vel_z *= -bounce_factor;
-    }
-}
-
 __device__ void pressure_viscosity_force(particle &p, const particle &q)
 {
     
     sph_float r_squared = distance_squared(p, q);
     sph_float r = sqrtf(r_squared);
-    if (r > r_e || r < 1e-5f)
+    if (r > r_e)
         return;
-
+    if(r < 1e-5f)
+        r=1e-5f;
     sph_float w_r_pressure = smoothing_pressure(r);
     sph_float w_r_viscosity = smoothing_viscosity(r);
 
@@ -282,5 +239,4 @@ __global__ void update_positions_kernel(particle* particles, int num_particles, 
     p.pos_y += p.vel_y * dt;
     p.pos_z += p.vel_z * dt;}
 
-    // boundary_navie(p); // bounce off walls
 }

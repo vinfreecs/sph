@@ -49,7 +49,7 @@ int main()
     int blocksPerGrid = (nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
     sph_float dt = 0.001f;
-    sph_float time = 5.0f;
+    sph_float time = 2.0f;
     std::string file_name_out = generateVTKFilename(0);
     file_name_out = "../output/out_boundary_92k/" + file_name_out;
     writeVTK(file_name_out, particles);
