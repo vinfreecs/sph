@@ -8,6 +8,7 @@ public:
     float density;
     float pressure;
     float force_x, force_y, force_z;
+<<<<<<< HEAD
 };
 
 void write_particles_cube_format(
@@ -58,3 +59,7 @@ void write_particles_cube_format(
     std::cout << "Wrote " << total_particles << " particles to " << filename << "\n";
 }
 
+=======
+    bool fix;
+};
+>>>>>>> d1da30e111c1eb26ffe093fc2fa921b245f4e194

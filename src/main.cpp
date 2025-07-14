@@ -13,6 +13,7 @@
 #include "utils/sph.hpp"
 
 
+<<<<<<< HEAD
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
@@ -20,6 +21,12 @@ int main()
     int nParticles = 1000;
     std::vector<particle> particles(nParticles);
     readInput("../input/pos_10.txt", nParticles, particles);
+=======
+    write_particles_cube_format("../input/pos_30.txt", 30, 0.5);
+    int nParticles =27000;
+    std::vector<particle> particles(nParticles);
+    readInput("../input/pos_30.txt",nParticles,particles);
+>>>>>>> d1da30e111c1eb26ffe093fc2fa921b245f4e194
     int boundary = 3;
     int nBuckets = ceil(boundary / r_e);
     std::vector<std::vector<int>> buckets(nBuckets * nBuckets * nBuckets);
@@ -53,6 +60,7 @@ int main()
     for (int t = 0; t < time / dt; t++)
     {
         auto start = std::chrono::high_resolution_clock::now();
+<<<<<<< HEAD
         update_neighbors(particles, neighbours, particle_neighbours);
         
         calculation_density_pressure_hash(particles, neighbours, particle_neighbours);
@@ -63,6 +71,17 @@ int main()
         calculate_force_hash(particles, neighbours, particle_neighbours);
         update_velocity(particles, dt);
         update_positions(particles, dt);
+=======
+        update_buckets(particles,buckets,boundary,nBuckets);
+        //calculate_density(particles);
+        calculate_density_buckets(particles, buckets, nBuckets);
+        calculate_pressure(particles);
+        //calculate_force(particles);
+        calculate_force_buckets(particles,buckets, nBuckets);
+        apply_repulsive_boundary_force(particles, buckets, nBuckets);
+        update_velocity(particles,dt);
+        update_positions(particles,dt);
+>>>>>>> d1da30e111c1eb26ffe093fc2fa921b245f4e194
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         total_time += elapsed.count();
