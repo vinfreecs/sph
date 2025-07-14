@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include "utils/config.hpp"
+#include "utils/config_serial.hpp"
 #include "utils/particle.hpp"
 #include "utils/io.hpp"
 #include "utils/sph.hpp"
@@ -16,7 +16,7 @@
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
-    // write_particles_cube_format("../input/pos_150.txt", 150, 0.5);
+    write_particles_cube_format("../input/pos_100000.txt", 100000, 0.5);
     int nParticles = 1000;
     std::vector<particle> particles(nParticles);
     readInput("../input/pos_10.txt", nParticles, particles);
