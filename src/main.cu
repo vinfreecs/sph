@@ -8,7 +8,7 @@
 #include <cuda_runtime.h>
 #include "utils/config.hpp"
 #include "utils/particle.hpp"
-#include "utils/io.hpp"
+#include "utils/io_aks.hpp"
 #include "utils/sph_cuda.hpp"
 #include "utils/cuda_error.hpp"
 
@@ -17,9 +17,11 @@ int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
     // write_particles_cube_format("../input/pos_150.txt", 150, 0.5);
-    int nParticles = 100000;
+    int nParticles = 94392;
     std::vector<particle> particles(nParticles);
-    readInput("../input/pos_100000.txt", nParticles, particles);
+    // readInput("../input/pos_100000.txt", nParticles, particles);
+    readVTK("../input/particle_scene.vtk", particles);
+
 
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
@@ -46,10 +48,10 @@ int main()
     int threadsPerBlock = 256;
     int blocksPerGrid = (nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
-    sph_float dt = 0.01f;
-    sph_float time = 10.0f;
+    sph_float dt = 0.001f;
+    sph_float time = 5.0f;
     std::string file_name_out = generateVTKFilename(0);
-    file_name_out = "../output/out_100k/" + file_name_out;
+    file_name_out = "../output/out_boundary_92k/" + file_name_out;
     writeVTK(file_name_out, particles);
     sph_float total_time = 0;
     for (int t = 0; t < time / dt; t++)
@@ -79,7 +81,7 @@ int main()
         {
             cudaMemcpy(particles.data(), d_particles, size_particles, cudaMemcpyDeviceToHost);
             std::string file_name = generateVTKFilename(t + 1);
-            file_name = "../output/out_100k/" + file_name;
+            file_name = "../output/out_boundary_92k/" + file_name;
             writeVTK(file_name, particles);
         }
     }
