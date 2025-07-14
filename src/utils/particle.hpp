@@ -8,6 +8,7 @@ public:
     float density;
     float pressure;
     float force_x, force_y, force_z;
+    bool is_boundary=false;
 };
 
 void write_particles_cube_format(
