@@ -1,12 +1,12 @@
-__device__ float distance_squared(particle p, particle q)
+__device__ sph_float distance_squared(particle p, particle q)
 {
-    float dx = p.pos_x - q.pos_x;
-    float dy = p.pos_y - q.pos_y;
-    float dz = p.pos_z - q.pos_z;
+    sph_float dx = p.pos_x - q.pos_x;
+    sph_float dy = p.pos_y - q.pos_y;
+    sph_float dz = p.pos_z - q.pos_z;
     return dx * dx + dy * dy + dz * dz;
 }
 
-__device__ float smoothing_pressure(float r)
+__device__ sph_float smoothing_pressure(sph_float r)
 {
     if (r < r_e)
     {
@@ -15,7 +15,7 @@ __device__ float smoothing_pressure(float r)
     return 0.0f;
 }
 
-__device__ float smoothing_viscosity(float r)
+__device__ sph_float smoothing_viscosity(sph_float r)
 {
     if (r < r_e)
     {
@@ -24,9 +24,9 @@ __device__ float smoothing_viscosity(float r)
     return 0.0f;
 }
 
-__device__ float smoothing_density(float r_squared)
+__device__ sph_float smoothing_density(sph_float r_squared)
 {
-    float r = sqrtf(r_squared);
+    sph_float r = sqrtf(r_squared);
     if (r < r_e)
     {
         return 315.0f * powf((r_e * r_e - r * r), 3.0f) / (64.0f * PI * powf(r_e, 9.0f));
@@ -39,9 +39,12 @@ __global__ void reset_forces(particle *particles, int n)
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
     {
-        particles[i].force_x = 0;
-        particles[i].force_y = 0;
-        particles[i].force_z = 0;
+        if(!particles[i].fixed){
+
+            particles[i].force_x = 0;
+            particles[i].force_y = 0;
+            particles[i].force_z = 0;
+        }
     }
 }
 
@@ -91,6 +94,7 @@ __device__ void boundary_navie(particle &p, double bounce_factor = 0.25)
 
 __device__ void pressure_viscosity_force(particle &p, const particle &q)
 {
+    
     sph_float r_squared = distance_squared(p, q);
     sph_float r = sqrtf(r_squared);
     if (r > r_e || r < 1e-5f)
@@ -155,36 +159,40 @@ __global__ void compute_density_pressure_hash_kernel(
         return;
 
     particle &p = particles[i];
-    p.density = 0.0f;
-    p.pressure = 0.0f;
-
-    int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
-    int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
-    int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
-
-    for (int dx = -1; dx <= 1; ++dx)
-    {
-        for (int dy = -1; dy <= 1; ++dy)
+    p.density = rho_o;
+    if(!p.fixed){
+        
+        p.density = 0.0f;
+        p.pressure = 0.0f;
+    
+        int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
+        int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
+        int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
+    
+        for (int dx = -1; dx <= 1; ++dx)
         {
-            for (int dz = -1; dz <= 1; ++dz)
+            for (int dy = -1; dy <= 1; ++dy)
             {
-
-                int hx = x + dx;
-                int hy = y + dy;
-                int hz = z + dz;
-
-                int hash = get_hash(hx, hy, hz);
-                int cell_id = ((hash % num_particles) + num_particles) % num_particles;
-
-                int j = neighbours[cell_id];
-                while (j != -1)
+                for (int dz = -1; dz <= 1; ++dz)
                 {
-                    particle &q = particles[j];
-                    float r_sq = distance_squared(p, q);
-                    float w_r = smoothing_density(r_sq);
-                    p.density += q.mass * w_r;
-
-                    j = particle_neighbours[j];
+    
+                    int hx = x + dx;
+                    int hy = y + dy;
+                    int hz = z + dz;
+    
+                    int hash = get_hash(hx, hy, hz);
+                    int cell_id = ((hash % num_particles) + num_particles) % num_particles;
+    
+                    int j = neighbours[cell_id];
+                    while (j != -1)
+                    {
+                        particle &q = particles[j];
+                        sph_float r_sq = distance_squared(p, q);
+                        sph_float w_r = smoothing_density(r_sq);
+                        p.density += q.mass * w_r;
+    
+                        j = particle_neighbours[j];
+                    }
                 }
             }
         }
@@ -204,41 +212,44 @@ __global__ void calculate_force_hash_kernel(
         return;
 
     particle &p = particles[i];
-    p.force_x = 0;
-    p.force_y = 0;
-    p.force_z = 0;
-
-    int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
-    int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
-    int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
-
-    for (int dx = -1; dx <= 1; ++dx)
-    {
-        for (int dy = -1; dy <= 1; ++dy)
+    if(!p.fixed){
+        p.force_x = 0;
+        p.force_y = 0;
+        p.force_z = 0;
+    
+        int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
+        int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
+        int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
+    
+        for (int dx = -1; dx <= 1; ++dx)
         {
-            for (int dz = -1; dz <= 1; ++dz)
+            for (int dy = -1; dy <= 1; ++dy)
             {
-                int hx = x + dx;
-                int hy = y + dy;
-                int hz = z + dz;
-
-                int hash = get_hash(hx, hy, hz);
-                int cell_id = ((hash % num_particles) + num_particles) % num_particles;
-
-                int j = neighbours[cell_id];
-                while (j != -1)
+                for (int dz = -1; dz <= 1; ++dz)
                 {
-                    if (j != i)
+                    int hx = x + dx;
+                    int hy = y + dy;
+                    int hz = z + dz;
+    
+                    int hash = get_hash(hx, hy, hz);
+                    int cell_id = ((hash % num_particles) + num_particles) % num_particles;
+    
+                    int j = neighbours[cell_id];
+                    while (j != -1)
                     {
-                        pressure_viscosity_force(p, particles[j]);
+                        if (j != i)
+                        {
+                            pressure_viscosity_force(p, particles[j]);
+                        }
+                        j = particle_neighbours[j];
                     }
-                    j = particle_neighbours[j];
                 }
             }
         }
+
     }
 
-    p.force_z -= p.density * gravity;
+    p.force_y -= p.density * gravity;
 }
 
 
@@ -251,9 +262,12 @@ __global__ void update_velocity_kernel(particle* particles, int num_particles, s
     particle& p = particles[i];
     if (p.density < 1e-5f) return;
 
-    p.vel_x += p.force_x * dt / p.density;
-    p.vel_y += p.force_y * dt / p.density;
-    p.vel_z += p.force_z * dt / p.density;
+    if(!p.fixed){
+        p.vel_x += p.force_x * dt / p.density;
+        p.vel_y += p.force_y * dt / p.density;
+        p.vel_z += p.force_z * dt / p.density;
+
+    }
 }
 
 __global__ void update_positions_kernel(particle* particles, int num_particles, sph_float dt)
@@ -263,9 +277,10 @@ __global__ void update_positions_kernel(particle* particles, int num_particles, 
 
     particle& p = particles[i];
 
+    if(!p.fixed){
     p.pos_x += p.vel_x * dt;
     p.pos_y += p.vel_y * dt;
-    p.pos_z += p.vel_z * dt;
+    p.pos_z += p.vel_z * dt;}
 
-    boundary_navie(p); // bounce off walls
+    // boundary_navie(p); // bounce off walls
 }

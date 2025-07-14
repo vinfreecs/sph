@@ -1,13 +1,14 @@
 class particle{
 public:
     int id;
-    int bucket_id=-1; // For neighbour search
-    float pos_x, pos_y, pos_z;
-    float vel_x, vel_y, vel_z;
-    float mass;
-    float density;
-    float pressure;
-    float force_x, force_y, force_z;
+    sph_float radius;
+    sph_float pos_x, pos_y, pos_z;
+    sph_float vel_x, vel_y, vel_z;
+    sph_float mass;
+    sph_float density;
+    sph_float pressure;
+    sph_float force_x, force_y, force_z;
+    bool fixed;
 };
 
 void write_particles_cube_format(
@@ -58,3 +59,42 @@ void write_particles_cube_format(
     std::cout << "Wrote " << total_particles << " particles to " << filename << "\n";
 }
 
+std::vector<particle> create_boundary_particles(sph_float boundary_size, sph_float r_e, sph_float wall_thickness = 1.0) {
+    std::vector<particle> boundary_particles;
+
+    int num_per_axis = boundary_size / r_e;
+    int thickness_layers = wall_thickness / r_e;
+
+    for (int i = 0; i <= num_per_axis; ++i) {
+        for (int j = 0; j <= num_per_axis; ++j) {
+            for (int k = 0; k <= num_per_axis; ++k) {
+                sph_float x = -boundary_size / 2 + i * r_e;
+                sph_float y = -boundary_size / 2 + j * r_e;
+                sph_float z = -boundary_size / 2 + k * r_e;
+
+                bool is_on_wall = 
+                    (i < thickness_layers) || (i > num_per_axis - thickness_layers) ||
+                    (j < thickness_layers) || (j > num_per_axis - thickness_layers) ||
+                    (k < thickness_layers) || (k > num_per_axis - thickness_layers);
+
+                if (is_on_wall) {
+                    particle p;
+                    p.pos_x = x;
+                    p.pos_y = y;
+                    p.pos_z = z;
+                    p.vel_x = 0.0f;
+                    p.vel_y = 0.0f;
+                    p.vel_z = 0.0f;
+                    p.mass = 1.0f;  // Can be tuned
+                    p.density = 0.0f;
+                    p.pressure = 0.0f;
+                    p.force_x = p.force_y = p.force_z = 0.0f;
+                    p.fixed = true;
+                    boundary_particles.push_back(p);
+                }
+            }
+        }
+    }
+
+    return boundary_particles;
+}

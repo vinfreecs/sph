@@ -9,7 +9,7 @@
 #include <cmath>
 #include "utils/config_serial.hpp"
 #include "utils/particle.hpp"
-#include "utils/io.hpp"
+#include "utils/io_aks.hpp"
 #include "utils/sph.hpp"
 
 
@@ -17,9 +17,11 @@ int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
     write_particles_cube_format("../input/pos_100000.txt", 100000, 0.5);
-    int nParticles = 1000;
+    auto boundary_particles = create_boundary_particles(boundary, r_e, 1.0f); // 1.0 unit thick wall
+    int nParticles = 94392;
     std::vector<particle> particles(nParticles);
-    readInput("../input/pos_10.txt", nParticles, particles);
+    // readInput("../input/particle_scene.vtk", nParticles, particles);
+    readVTK("../input/particle_scene.vtk", particles);
     int boundary = 3;
     int nBuckets = ceil(boundary / r_e);
     std::vector<std::vector<int>> buckets(nBuckets * nBuckets * nBuckets);
@@ -44,10 +46,10 @@ int main()
     // std::cout<<std::endl;
 
 
-    sph_float dt = 0.01;
-    sph_float time = 10;
+    sph_float dt = 0.001;
+    sph_float time = 2;
     std::string file_name_out = generateVTKFilename(0);
-    file_name_out = "../output/" + file_name_out;
+    file_name_out = "../output/checking/" + file_name_out;
     writeVTK(file_name_out, particles);
     sph_float total_time = 0;
     for (int t = 0; t < time / dt; t++)
@@ -67,7 +69,7 @@ int main()
         std::chrono::duration<double> elapsed = end - start;
         total_time += elapsed.count();
         std::string file_name = generateVTKFilename(t + 1);
-        file_name = "../output/" + file_name;
+        file_name = "../output/checking/" + file_name;
         writeVTK(file_name, particles);
     }
     std::cout << "Total time taken for simulation : " << total_time << " seconds" << std::endl;
