@@ -17,11 +17,11 @@ int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
     // write_particles_cube_format("../input/pos_150.txt", 150, 0.5);
-    int nParticles = 94392;
+    int nParticles = 956618;
     std::vector<particle> particles(nParticles);
     // readInput("../input/pos_100000.txt", nParticles, particles);
     auto start_read_vtk = std::chrono::high_resolution_clock::now();
-    readVTK("../input/particle_scene.vtk", particles);
+    readVTK("../input/particle_scene_2.vtk", particles);
     auto end_read_vtk = std::chrono::high_resolution_clock::now();
 
     std::vector<int> neighbours(particles.size(), -1);
@@ -52,7 +52,7 @@ int main()
     sph_float dt = 0.001f;
     sph_float time = 2.0f;
     std::string file_name_out = generateVTKFilename(0);
-    file_name_out = "../output/out_boundary_92k/" + file_name_out;
+    file_name_out = "../output/out_boundary_956k/" + file_name_out;
     writeVTK(file_name_out, particles);
     sph_float total_time = 0;
     for (int t = 0; t < time / dt; t++)

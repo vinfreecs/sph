@@ -1,1 +1,1 @@
-rm -rf ../output/checking/*
+rm -rf ../output/out_boundary_92k/*
