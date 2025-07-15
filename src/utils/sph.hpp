@@ -277,6 +277,5 @@ void update_positions(std::vector<particle> &particles, sph_float dt)
         p.pos_x += p.vel_x * dt;
         p.pos_y += p.vel_y * dt;
         p.pos_z += p.vel_z * dt;}
-        // boundary_navie(p);
     }
 }
