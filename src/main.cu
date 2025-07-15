@@ -83,7 +83,7 @@ int main()
             cudaMemcpy(particles.data(), d_particles, size_particles, cudaMemcpyDeviceToHost);
 
             std::string file_name = generateVTKFilename(t + 1);
-            file_name = "../output/checking/" + file_name;
+            file_name = "../output/out_boundary_956k/" + file_name;
 
             auto start_write_vtk = std::chrono::high_resolution_clock::now();
             writeVTK(file_name, particles);
@@ -91,6 +91,7 @@ int main()
             std::chrono::duration<double> elapsed_write_vtk = end_write_vtk - start_write_vtk;
             sph_float total_time_write_vtk = elapsed_write_vtk.count();
             std::cout<<"Time Taken to write vtk :"<<total_time_write_vtk<<std::endl;
+            std::cout<<"Time elapsed in the simulation"<<total_time<<std::endl;
         }
     }
 
