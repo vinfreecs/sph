@@ -49,8 +49,8 @@ int main()
     int threadsPerBlock = 256;
     int blocksPerGrid = (nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
-    sph_float dt = 0.001f;
-    sph_float time = 2.0f;
+    sph_float dt = 0.0001f;
+    sph_float time = 5.0f;
     std::string file_name_out = generateVTKFilename(0);
     file_name_out = "../output/out_boundary_956k/" + file_name_out;
     writeVTK(file_name_out, particles);
@@ -78,7 +78,7 @@ int main()
         std::chrono::duration<double> elapsed = end - start;
         total_time += elapsed.count();
 
-        if (t % 50 == 0)
+        if (t % 5000 == 0)
         {
             cudaMemcpy(particles.data(), d_particles, size_particles, cudaMemcpyDeviceToHost);
 
