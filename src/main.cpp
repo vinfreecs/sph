@@ -4,31 +4,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "another_phy.hpp"
+#include <fstream>
+#include "yet_another_physics.hpp"
 
 const int NUM_SEGMENTS = 100;
 const float RADIUS = 0.05f;
 
 bool isPlaying = true;
-// bool applyClickForce = false;
-// float click_x = 0.0f, click_y = 0.0f;
 bool isClickActive = false;     // true while right mouse button is held
 float click_x = 0.0f, click_y = 0.0f;
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
-    {
-        if (action == GLFW_PRESS)
-        {
-            isClickActive = true;
-        }
-        else if (action == GLFW_RELEASE)
-        {
-            isClickActive = false;
-        }
-    }
-}
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -52,34 +36,17 @@ void drawCircle(float cx, float cy, float r, int segments)
     glEnd();
 }
 
-void update_physics(float dt)
+void update_physics(float dt,std::vector<particle>&particles,std::vector<int>& neighbours,std::vector<int>& particle_neighbours)
 {
-    dt=0.001;
     // std::cout<<"the dt is :"<<dt<<std::endl;
     // Update physics
-    update_buckets(particles, buckets, boundary, nBuckets);
-    // calculate_density(particles);
-    calculate_density_buckets(particles, buckets, nBuckets);
-    calculate_pressure(particles);
-    // calculate_force(particles,dt);
-    calculate_force_buckets(particles, buckets, nBuckets, dt);
-//     if (isClickActive)
-// {
-//     double xpos, ypos;
-//     int width, height;
-//     glfwGetCursorPos(glfwGetCurrentContext(), &xpos, &ypos);
-//     glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
-//     float x_ndc = 2.0f * xpos / width - 1.0f;
-//     float y_ndc = 1.0f - 2.0f * ypos / height;
-//     float aspect = static_cast<float>(width) / height;
-//     float cx = (aspect >= 1.0f) ? x_ndc * aspect : x_ndc;
-//     float cy = (aspect >= 1.0f) ? y_ndc : y_ndc / aspect;
-//     apply_click_repulsion(particles, cx, cy, dt);
-// }
-
-    apply_gravity(particles, -0.8, dt);
+    update_neighbors(particles, neighbours, particle_neighbours);
+    calculation_density_pressure_hash(particles, neighbours, particle_neighbours);
+    reset_forces(particles);
+    calculate_force_hash(particles, neighbours, particle_neighbours);
+    update_velocity(particles, dt);
     update_positions(particles, dt);
-    //apply_boundary_conditions(particles, 2.0f, 2.0f);
+    // apply_boundary_conditions(particles, -1.0f, 1.0f, -1.0f, 1.0f);
 }
 
 // Gradient: blue → cyan → green → yellow → red
@@ -117,7 +84,7 @@ void velocityToColor(float v, float &r, float &g, float &b)
     }
 }
 
-void drawScene(GLFWwindow *window)
+void drawScene(GLFWwindow *window,std::vector<particle>& particles)
 {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -142,7 +109,7 @@ void drawScene(GLFWwindow *window)
 
     for (const auto &p : particles)
     {
-        float v = std::sqrt(p.velocity_x * p.velocity_x + p.velocity_y * p.velocity_y);
+        float v = std::sqrt(p.vel_x * p.vel_x + p.vel_y * p.vel_y);
         min_vel = std::min(min_vel, v);
         max_vel = std::max(max_vel, v);
     }
@@ -150,14 +117,21 @@ void drawScene(GLFWwindow *window)
     // 2. Draw particles with color gradient
     for (const auto &p : particles)
     {
-        float v = std::sqrt(p.velocity_x * p.velocity_x + p.velocity_y * p.velocity_y);
-        float norm_v = (v - min_vel) / (max_vel - min_vel + 1e-5f);
+        if(!p.fixed){
+            float v = std::sqrt(p.vel_x * p.vel_x + p.vel_y * p.vel_y);
+            float norm_v = (v - min_vel) / (max_vel - min_vel + 1e-5f);
+    
+            float r, g, b;
+            velocityToColor(norm_v, r, g, b);
+    
+            glColor3f(r, g, b);
+            drawCircle(p.pos_x, p.pos_y, p.radius, NUM_SEGMENTS);
 
-        float r, g, b;
-        velocityToColor(norm_v, r, g, b);
-
-        glColor3f(r, g, b);
-        drawCircle(p.x, p.y, p.radius, NUM_SEGMENTS);
+        }
+        else{
+            glColor3f(255, 255, 255);
+            drawCircle(p.pos_x, p.pos_y, p.radius, NUM_SEGMENTS);
+        }
     }
 }
 
@@ -190,21 +164,39 @@ int main()
     double simLastTime = glfwGetTime();
     double fpsLastTime = simLastTime;
     int frameCount = 0;
+    write_particles_square_format("../input/particles_2d_1000.txt", 1000, 1.0,1);
 
-    update_buckets(particles, buckets, boundary, nBuckets);
+    std::vector<particle> boundary_vec = create_boundary_particles_2d(1.5,r_e_b);
+    std::vector<particle> boundary_circle = create_boundary_circle_2d(0.5,r_e_b);
+    std::vector<particle> boundary_circle_open =create_boundary_circle_2d_with_opening(0.5f, 0.04f, 0.2f, M_PI / 6.0, M_PI / 2.0);
+
+
+
+
+    std::vector<particle> particles(1000);
+    readInput("../input/particles_2d_1000.txt",1000,particles);
+
+    // particles.insert(particles.end(),boundary_circle.begin(),boundary_circle.end());
+    //particles.insert(particles.end(),boundary_vec.begin(),boundary_vec.end());
+    particles.insert(particles.end(),boundary_circle_open.begin(),boundary_circle_open.end());
+
+    std::vector<int> neighbours(particles.size(), -1);
+    std::vector<int> particle_neighbours(particles.size(),-1);
+
+    update_neighbors(particles, neighbours, particle_neighbours);
 
     glfwSetKeyCallback(window, key_callback);
- glfwSetMouseButtonCallback(window, mouse_button_callback); 
     while (!glfwWindowShouldClose(window))
     {
         double currentTime = glfwGetTime();
         float dt = static_cast<float>(currentTime - simLastTime);
+        dt = 0.001;
         simLastTime = currentTime;
 
         if (isPlaying)
-            update_physics(dt);
+            update_physics(dt,particles, neighbours,particle_neighbours);
         // Update viewport and aspect ratio
-        drawScene(window);
+        drawScene(window,particles);
         glfwSwapBuffers(window);
         glfwPollEvents();
 
