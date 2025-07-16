@@ -3,7 +3,7 @@
 
 using sph_float = float;
 float PI = 3.14;
-float r_e = 0.04;
+float r_e = 0.06;
 sph_float dynamic_viscosity = 0.001;
 
 sph_float ideal_d = 0.02;
@@ -111,7 +111,7 @@ std::vector<particle> create_particles_grid(int rows, int cols, float spacing, f
 std::vector<particle> create_all_particles()
 {
     std::vector<particle> fluid_particles = create_particles_grid(
-        2, 2,
+        20, 20,
         0.05f,
         0.01f,
         1.0f);
@@ -215,7 +215,7 @@ void apply_gravity(std::vector<particle> &particles, float gravity, float dt)
     for (auto &p : particles)
     {
         if (p.is_boundary == false)
-            p.velocity_y += gravity * dt/p.density; // gravity affects only y-direction
+            p.velocity_y += gravity * dt; // gravity affects only y-direction
     }
 }
 
@@ -281,8 +281,7 @@ void calculate_density(std::vector<particle> &particles)
 {
     for (auto &p : particles)
     {
-        if (p.is_boundary)
-            continue;
+        if (!p.is_boundary){
         p.density = 0.0;
         for (auto &q : particles)
         {
@@ -292,16 +291,8 @@ void calculate_density(std::vector<particle> &particles)
                 float w_r = smoothing_density(r_dist_squared);
                 p.density += q.mass * (w_r);
             }
-            else
-            {
-                sph_float r_dist = distance_squared(p, q);
-                if (ideal_d * ideal_d < r_dist)
-                    continue;
-                sph_float w_r = smoothing_density(r_dist);
-                p.density += q.mass * w_r;
-                // std::cout<<"inside the density boundary calcu - "<<w_r<<" density of the moving particle "<<p.density<<" "<<std::endl;
-            }
         }
+    }
     }
 }
 
@@ -369,8 +360,7 @@ void calculate_force(std::vector<particle> &particles, float dt)
     for (int i = 0; i < particles.size(); i++)
     {
         particle &p = particles[i];
-        if (p.is_boundary)
-            continue;
+        if (!p.is_boundary){
         for (int j = 0; j < particles.size(); j++)
         {
             particle &q = particles[j];
@@ -379,38 +369,10 @@ void calculate_force(std::vector<particle> &particles, float dt)
                 pressure_viscosity_force(p, q, dt);
             }
 
-            if (q.is_boundary)
-            {
-                sph_float r2 = distance_squared(p, q);
-                sph_float riw = std::sqrt(r2);
-                if (riw < 1e-5f) riw = 1e-5f; // avoid division by zero
-                sph_float dx = p.x - q.x;
-                sph_float dy = p.y - q.y;
-                sph_float nri_x = dx / riw;
-                sph_float nri_y = dy / riw;
 
-                sph_float overlap = ideal_d - riw;
-                if (ideal_d * ideal_d < riw * riw)
-                    continue;
-
-                    //the incoming force or velocity is not considered?
-
-
-                sph_float force_wall_x = p.mass * overlap * (nri_x) / (dt * dt);
-                sph_float force_wall_y = p.mass * overlap * (nri_y) / (dt * dt);
-
-                 std::cout<<"velocity before x:"<<p.velocity_x<<"  y:"<<p.velocity_y<<" "<<std::endl;
-
-                 std::cout<<"boundary repulsion force in x:"<<(force_wall_x / p.density)*dt<<"  y:"<<(force_wall_y/ p.density)*dt<<" "<<std::endl;
-                //  Apply repulsion
-                std::cout<<"Positions of q.x and q.y :"<<q.x<< "  "<<q.y<<std::endl;
-                 p.velocity_x += (force_wall_x/p.density);
-                 p.velocity_y += (force_wall_y/p.density);
-
-                std::cout<<"velocity after x:"<<p.velocity_x<<"  y:"<<p.velocity_y<<" "<<std::endl;
-            }
         }
-        p.velocity_y += -9.8*dt/p.density;
+        p.velocity_y += -1.8*dt;
+    }
     }
 }
 
