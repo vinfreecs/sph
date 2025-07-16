@@ -153,7 +153,7 @@ void calculation_density_pressure_hash(std::vector<particle> &particles,
     for (int i = 0; i < n; i++)
     {
         particle &p = particles[i];
-        p.density = rho_o;
+        p.density = 9.0f;
         if (!p.fixed)
         {
             p.density = 0;

@@ -48,7 +48,7 @@ def generate_wall_particles():
     All particles are fixed (fixed = 1) and stationary.
     """
     particles = []
-    dx = dy = dz = 0.01
+    dx = dy = dz = 0.0075
 
     x_min, x_max = 1.125, 1.875
     y_min, y_max = 1.5, 2.25

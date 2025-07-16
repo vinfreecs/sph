@@ -22,7 +22,15 @@ void writeVTK(const std::string &filename, std::vector<particle> &particles)
         return;
     }
 
-    const size_t numParticles = particles.size();
+    // Count fluid particles
+    int numParticles = 0;
+    for (auto &p : particles)
+    {
+        if (!p.fixed)
+            numParticles++;
+    }
+
+    std::cout << "Num of particles: " << numParticles << std::endl;
 
     out << "# vtk DataFile Version 4.0\n";
     out << "hesp visualization file\n";
@@ -31,8 +39,12 @@ void writeVTK(const std::string &filename, std::vector<particle> &particles)
     out << "POINTS " << numParticles << " double\n";
 
     out << std::fixed << std::setprecision(6);
-    for (const auto& particle : particles)
+
+    // Write positions
+    for (const auto &particle : particles)
     {
+        if (particle.fixed)
+            continue;
         out << particle.pos_x << " "
             << particle.pos_y << " "
             << particle.pos_z << "\n";
@@ -40,17 +52,23 @@ void writeVTK(const std::string &filename, std::vector<particle> &particles)
 
     out << "CELLS 0 0\n";
     out << "CELL_TYPES 0\n";
-    out << "POINT_DATA " << numParticles << "\n";
 
+    // Write scalar mass data only for non-boundary particles
+    out << "POINT_DATA " << numParticles << "\n";
     out << "SCALARS m double\nLOOKUP_TABLE default\n";
-    for (const auto& particle : particles)
+    for (const auto &particle : particles)
     {
+        if (particle.fixed)
+            continue;
         out << particle.mass << "\n";
     }
 
+    // Write velocity vectors for non-boundary particles
     out << "VECTORS v double\n";
-    for (const auto& particle : particles)
+    for (const auto &particle : particles)
     {
+        if (particle.fixed)
+            continue;
         out << particle.vel_x << " "
             << particle.vel_y << " "
             << particle.vel_z << "\n";
