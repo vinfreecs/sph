@@ -800,6 +800,6 @@ CMakeFiles/OpenGLApp.dir/src/main.cpp.o
  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdarg.h
  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stddef.h
  /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h
- /Users/vinay/Desktop/OpenGLApp/src/physics.hpp
+ /Users/vinay/Desktop/OpenGLApp/src/another_phy.hpp
  /opt/homebrew/opt/glfw/include/GLFW/glfw3.h
 

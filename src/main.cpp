@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "physics.hpp"
+#include "another_phy.hpp"
 
 const int NUM_SEGMENTS = 100;
 const float RADIUS = 0.05f;
@@ -54,6 +54,7 @@ void drawCircle(float cx, float cy, float r, int segments)
 
 void update_physics(float dt)
 {
+    dt=0.001;
     // std::cout<<"the dt is :"<<dt<<std::endl;
     // Update physics
     update_buckets(particles, buckets, boundary, nBuckets);
@@ -68,20 +69,17 @@ void update_physics(float dt)
 //     int width, height;
 //     glfwGetCursorPos(glfwGetCurrentContext(), &xpos, &ypos);
 //     glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
-
 //     float x_ndc = 2.0f * xpos / width - 1.0f;
 //     float y_ndc = 1.0f - 2.0f * ypos / height;
-
 //     float aspect = static_cast<float>(width) / height;
 //     float cx = (aspect >= 1.0f) ? x_ndc * aspect : x_ndc;
 //     float cy = (aspect >= 1.0f) ? y_ndc : y_ndc / aspect;
-
 //     apply_click_repulsion(particles, cx, cy, dt);
 // }
 
     apply_gravity(particles, -0.8, dt);
     update_positions(particles, dt);
-    apply_boundary_conditions(particles, 1.0f, 1.0f);
+    //apply_boundary_conditions(particles, 2.0f, 2.0f);
 }
 
 // Gradient: blue → cyan → green → yellow → red

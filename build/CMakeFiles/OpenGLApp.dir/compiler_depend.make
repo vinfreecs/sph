@@ -799,11 +799,9 @@ CMakeFiles/OpenGLApp.dir/src/main.cpp.o: /Users/vinay/Desktop/OpenGLApp/src/main
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdarg.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stddef.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stdint.h \
-  /Users/vinay/Desktop/OpenGLApp/src/physics.hpp \
+  /Users/vinay/Desktop/OpenGLApp/src/another_phy.hpp \
   /opt/homebrew/opt/glfw/include/GLFW/glfw3.h
 
-
-/Users/vinay/Desktop/OpenGLApp/src/physics.hpp:
 
 /Library/Developer/CommandLineTools/usr/lib/clang/17/include/stddef.h:
 
@@ -1986,6 +1984,8 @@ CMakeFiles/OpenGLApp.dir/src/main.cpp.o: /Users/vinay/Desktop/OpenGLApp/src/main
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__type_traits/common_type.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__memory/voidify.h:
+
+/Users/vinay/Desktop/OpenGLApp/src/another_phy.hpp:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__system_error/system_error.h:
 

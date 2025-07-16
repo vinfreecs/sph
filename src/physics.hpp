@@ -4,7 +4,7 @@
 using sph_float =float;
 float PI = 3.14;
 float r_e = 0.15;
-sph_float dynamic_viscosity = 0.01;
+sph_float dynamic_viscosity = 0.001;
 
 
 struct particle {
@@ -95,7 +95,7 @@ void update_buckets(std::vector<particle>& particles, std::vector<std::vector<in
 int boundary = 3;
     int nBuckets = ceil(boundary/r_e);
 
-std::vector<std::vector<int>> buckets(nBuckets*nBuckets*nBuckets); //neighbours 3 is the boundary and 0.006 is the smoothing length effective radius etc
+std::vector<std::vector<int>> buckets(nBuckets*nBuckets); //neighbours 3 is the boundary and 0.006 is the smoothing length effective radius etc
 
 std::vector<int> neighbour_list(particles.size());
 std::vector<int> start_neighbour(particles.size(),-1);
@@ -249,20 +249,16 @@ void calculate_force(std::vector<particle>& particles, float dt){
 
 std::vector<int> get_neighbours(int idx, int n) {
     int x = idx % n;
-    int y = (idx / n) % n;
-    int z = idx / (n * n);
+    int y = idx / n;
 
     std::vector<int> neighbors;
     for (int dx = -1; dx <= 1; dx++) {
         for (int dy = -1; dy <= 1; dy++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                int nx = x + dx;
-                int ny = y + dy;
-                int nz = z + dz;
-                if (nx >= 0 && ny >= 0 && nz >= 0 && nx < n && ny < n && nz < n) {
-                    int neighbor_idx = nx + ny * n + nz * n * n;
-                    neighbors.push_back(neighbor_idx);
-                }
+            int nx = x + dx;
+            int ny = y + dy;
+            if (nx >= 0 && ny >= 0 && nx < n && ny < n) {
+                int neighbor_idx = nx + ny * n;
+                neighbors.push_back(neighbor_idx);
             }
         }
     }
