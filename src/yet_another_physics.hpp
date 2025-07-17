@@ -1,8 +1,8 @@
 using sph_float = float;
-sph_float r_e = 0.04; // assuming 6 times of the radius
+sph_float r_e = 0.07; // assuming 6 times of the radius
 sph_float r_e_b =0.04;
 sph_float PI = 3.14;
-sph_float dynamic_viscosity = 0.1;
+sph_float dynamic_viscosity = 10;
 sph_float gravity = 9.8;
 sph_float radius = 0.01;
 sph_float k = 10;
@@ -199,7 +199,7 @@ void calculation_density_pressure_hash(std::vector<particle> &particles,
     for (int i = 0; i < n; i++)
     {
         particle &p = particles[i];
-        p.density = 200.0f;
+        p.density = 999.0f;
         if (!p.fixed)
         {
             p.density = 0;
