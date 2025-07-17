@@ -43,8 +43,7 @@ void update_physics(float dt,std::vector<particle>&particles,std::vector<int>& n
     update_neighbors(particles, neighbours, particle_neighbours);
     calculation_density_pressure_hash(particles, neighbours, particle_neighbours);
     reset_forces(particles);
-    calculate_force_hash(particles, neighbours, particle_neighbours);
-    update_velocity(particles, dt);
+    calculate_force_hash(particles, neighbours, particle_neighbours, dt);
     update_positions(particles, dt);
     // apply_boundary_conditions(particles, -1.0f, 1.0f, -1.0f, 1.0f);
 }
@@ -164,7 +163,7 @@ int main()
     double simLastTime = glfwGetTime();
     double fpsLastTime = simLastTime;
     int frameCount = 0;
-    write_particles_square_format("../input/particles_2d_10000.txt", 10000, 1.0,1);
+    write_particles_square_format("../input/particles_2d_2000.txt", 2000, 1.0,1);
 
     std::vector<particle> boundary_vec = create_boundary_particles_2d(1.5,r_e_b);
     std::vector<particle> boundary_circle = create_boundary_circle_2d(0.5,r_e_b);
@@ -173,8 +172,8 @@ int main()
 
 
 
-    std::vector<particle> particles(10000);
-    readInput("../input/particles_2d_10000.txt",10000,particles);
+    std::vector<particle> particles(2000);
+    readInput("../input/particles_2d_2000.txt",2000,particles);
 
     // particles.insert(particles.end(),boundary_circle.begin(),boundary_circle.end());
     particles.insert(particles.end(),boundary_vec.begin(),boundary_vec.end());

@@ -1,12 +1,12 @@
 using sph_float = float;
-sph_float r_e = 0.07; // assuming 6 times of the radius
-sph_float r_e_b =0.04;
+sph_float r_e = 0.04; // assuming 6 times of the radius
+sph_float r_e_b = 0.02;
 sph_float PI = 3.14;
 sph_float dynamic_viscosity = 10;
-sph_float gravity = 9.8;
+sph_float gravity = 0;
 sph_float radius = 0.01;
 sph_float k = 10;
-sph_float rho_o = 10;
+sph_float rho_o = 998;
 sph_float rest_pressure = 0;
 int boundary = 2;
 
@@ -75,8 +75,6 @@ sph_float smoothing_pressure(sph_float r)
         return 0.0;
 }
 
-
-
 sph_float smoothing_viscosity(sph_float r)
 {
     if (r < r_e)
@@ -100,44 +98,7 @@ sph_float smoothing_density(sph_float r)
         return 0.0;
 }
 
-void apply_boundary_conditions(std::vector<particle> &particles, float xmin, float xmax, float ymin, float ymax)
-{
-    float bounce = 0.3f; // restitution coefficient
-    for (auto &p : particles)
-    {
-        if (p.fixed)
-            continue;
-
-        // Left wall
-        if (p.pos_x - p.radius < xmin)
-        {
-            p.pos_x = xmin + p.radius;
-            p.vel_x *= -bounce;
-        }
-        // Right wall
-        if (p.pos_x + p.radius > xmax)
-        {
-            p.pos_x = xmax - p.radius;
-            p.vel_x *= -bounce;
-        }
-
-        // Bottom wall
-        if (p.pos_y - p.radius < ymin)
-        {
-            p.pos_y = ymin + p.radius;
-            p.vel_y *= -bounce;
-        }
-
-        // Top wall (optional)
-        if (p.pos_y + p.radius > ymax)
-        {
-            p.pos_y = ymax - p.radius;
-            p.vel_y *= -bounce;
-        }
-    }
-}
-
-void pressure_viscosity_force(particle &p, particle &q)
+void pressure_viscosity_force(particle &p, particle &q, sph_float dt)
 {
     sph_float r_squared = distance_squared(p, q);
     sph_float r = std::sqrt(r_squared);
@@ -147,20 +108,57 @@ void pressure_viscosity_force(particle &p, particle &q)
     //     r = 1e-6; // to avoid division by zero
     // Calculate the force due to pressure and viscosity
 
-    sph_float w_r_pressure = smoothing_pressure(r);
+    
+    if (q.fixed)
+    {
+        sph_float min_distance = 2.0f * radius; // assuming both particles have the same radius
+        sph_float actual_distance = std::sqrt(distance_squared(p, q));
+
+        if (actual_distance < min_distance && actual_distance > 1e-6f)
+        {
+            // Normalize direction vector from q to p
+            sph_float dx = p.pos_x - q.pos_x;
+            sph_float dy = p.pos_y - q.pos_y;
+            sph_float inv_dist = 1.0f / actual_distance;
+            dx *= inv_dist;
+            dy *= inv_dist;
+
+            // Push particle outside the boundary
+            sph_float penetration = min_distance - actual_distance;
+            p.pos_x += dx * penetration;
+            p.pos_y += dy * penetration;
+
+            // Reflect velocity
+            sph_float v_dot_n = p.vel_x * dx + p.vel_y * dy;
+            p.vel_x -= 2.0f * v_dot_n * dx;
+            p.vel_y -= 2.0f * v_dot_n * dy;
+
+            // // Optionally apply damping or restitution
+            // float damping = 0.80f; // energy loss on collision
+            // p.vel_x *= damping;
+            // p.vel_y *= damping;
+        }
+    }
+
+    if (!q.fixed)
+    {
+        sph_float w_r_pressure = smoothing_pressure(r);
     sph_float w_r_viscosity = smoothing_viscosity(r);
-    sph_float force_pressure_x = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_x - p.pos_x) / (2 * q.density*r); // TODO
-    sph_float force_pressure_y = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_y - p.pos_y) / (2 * q.density*r);
+    sph_float force_pressure_x = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_x - p.pos_x) / (2 * q.density * r); // TODO
+    sph_float force_pressure_y = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_y - p.pos_y) / (2 * q.density * r);
     sph_float force_viscosity_x = q.mass * (q.vel_x - p.vel_x) * w_r_viscosity / (q.density);
     sph_float force_viscosity_y = q.mass * (q.vel_y - p.vel_y) * w_r_viscosity / (q.density);
     sph_float fx = -force_pressure_x + dynamic_viscosity * force_viscosity_x;
     sph_float fy = -force_pressure_y + dynamic_viscosity * force_viscosity_y;
     p.force_x += fx;
     p.force_y += fy;
-    if (!q.fixed)
-    {
+    p.vel_x += p.force_x * dt / p.density;
+    p.vel_y += p.force_y * dt / p.density;
+
         q.force_x -= fx;
         q.force_y -= fy;
+        q.vel_x += q.force_x * dt / q.density;
+        q.vel_y += q.force_y * dt / q.density;
     }
 }
 
@@ -237,7 +235,7 @@ void calculation_density_pressure_hash(std::vector<particle> &particles,
 
 void calculate_force_hash(std::vector<particle> &particles,
                           std::vector<int> &neighbours,
-                          std::vector<int> &particle_neighbours)
+                          std::vector<int> &particle_neighbours, sph_float dt)
 {
     int n = particles.size();
     for (int i = 0; i < n; i++)
@@ -268,7 +266,7 @@ void calculate_force_hash(std::vector<particle> &particles,
                             if (r < r_e)
 
                             {
-                                pressure_viscosity_force(p, q);
+                                pressure_viscosity_force(p, q, dt);
                             }
                         }
                         j = particle_neighbours[j];
@@ -277,6 +275,7 @@ void calculate_force_hash(std::vector<particle> &particles,
             }
         }
         p.force_y -= p.density * gravity; // gravity only in the -ve z direction
+        p.vel_y += p.force_y * dt / p.density;
     }
 }
 
@@ -288,20 +287,6 @@ void reset_forces(std::vector<particle> &particles)
         {
             p.force_x = 0;
             p.force_y = 0;
-        }
-    }
-}
-
-void update_velocity(std::vector<particle> &particles, sph_float dt)
-{
-    for (auto &p : particles)
-    {
-        // std::cout <<"Force x :"<<p.force_x<<" y :"<<p.force_y<<" z :"<<p.force_z<<std::endl;
-        if (!p.fixed)
-        {
-
-            p.vel_x += p.force_x * dt / p.density;
-            p.vel_y += p.force_y * dt / p.density;
         }
     }
 }
@@ -402,8 +387,8 @@ void write_particles_square_format(
     {
         for (int j = 0; j < particles_per_axis && particles_written < total_particles; ++j)
         {
-            double x = i * spacing + spacing / 2.0+ y_offset;
-            double y = j * spacing + spacing / 2.0; // Center Y
+            double x = i * spacing + spacing / 2.0 + y_offset;
+            double y = j * spacing + spacing / 2.0 + y_offset; // Center Y
             file << x << " " << y << "\n";
             particles_written++;
         }
@@ -431,7 +416,7 @@ std::vector<particle> create_boundary_particles_2d(sph_float boundary_size, sph_
 {
     std::vector<particle> boundary_particles;
 
-    sph_float spacing = r_e_b * overlap_factor;  // reduce spacing to overlap
+    sph_float spacing = r_e_b * overlap_factor; // reduce spacing to overlap
     int num_per_axis = boundary_size / spacing;
     sph_float half_size = boundary_size / 2.0f;
 
@@ -452,7 +437,7 @@ std::vector<particle> create_boundary_particles_2d(sph_float boundary_size, sph_
                 p.vel_x = 0.0f;
                 p.vel_y = 0.0f;
                 p.mass = 1.0f;
-                p.density = 7870.0f;  // optional: high to simulate solid wall
+                p.density = 7870.0f; // optional: high to simulate solid wall
                 p.pressure = 0.0f;
                 p.force_x = 0.0f;
                 p.force_y = 0.0f;
@@ -466,13 +451,12 @@ std::vector<particle> create_boundary_particles_2d(sph_float boundary_size, sph_
     return boundary_particles;
 }
 
-
 std::vector<particle> create_boundary_circle_2d(sph_float radius, sph_float r_e_b, float overlap_factor = 0.2f)
 {
     std::vector<particle> boundary_particles;
 
     sph_float spacing = r_e_b * overlap_factor;
-    int num_particles = static_cast<int>((2.0f * M_PI * radius) / spacing);  // circumference / spacing
+    int num_particles = static_cast<int>((2.0f * M_PI * radius) / spacing); // circumference / spacing
     sph_float angle_step = 2.0f * M_PI / num_particles;
 
     for (int i = 0; i < num_particles; ++i)
@@ -487,7 +471,7 @@ std::vector<particle> create_boundary_circle_2d(sph_float radius, sph_float r_e_
         p.vel_x = 0.0f;
         p.vel_y = 0.0f;
         p.mass = 1.0f;
-        p.density = 7870.0f;  // optional: solid wall
+        p.density = 7870.0f; // optional: solid wall
         p.pressure = 0.0f;
         p.force_x = 0.0f;
         p.force_y = 0.0f;
@@ -503,8 +487,8 @@ std::vector<particle> create_boundary_circle_2d_with_opening(
     sph_float radius,
     sph_float r_e_b,
     float overlap_factor = 0.2f,
-    sph_float opening_angle_rad = M_PI / 6.0,  // 30° gap
-    sph_float opening_center_rad = 0.0         // gap centered at angle 0 (right side)
+    sph_float opening_angle_rad = M_PI / 6.0, // 30° gap
+    sph_float opening_center_rad = 0.0        // gap centered at angle 0 (right side)
 )
 {
     std::vector<particle> boundary_particles;
