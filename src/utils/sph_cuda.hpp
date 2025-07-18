@@ -98,8 +98,8 @@ __device__ void pressure_viscosity_force(particle &p, const particle &q)
     if (r > r_e)
         return;
 
-    // if (r < 1e-5)
-    //     r = 1e-5; // to avoid division by zero
+    if (r < 1e-5)
+        r = 1e-5; // to avoid division by zero
 
     if (q.fixed)
     {
@@ -296,7 +296,7 @@ __global__ void update_velocity_kernel(particle* particles, int num_particles, s
     if (i >= num_particles) return;
 
     particle& p = particles[i];
-    // if (p.density < 1e-5f) return;
+    if (p.density < 1e-5f) return;
     if(!p.fixed){
         p.vel_x += p.force_x * dt / p.density;
         p.vel_y += p.force_y * dt / p.density;

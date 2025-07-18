@@ -27,6 +27,10 @@ int main()
 
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
+    std::cout<<"Num of particles before :"<<nParticles<<std::endl;
+
+    nParticles = particles.size();
+    std::cout<<"Num of particles after :"<<nParticles<<std::endl;
 
     particle *d_particles;
 
@@ -53,7 +57,7 @@ int main()
     sph_float dt = 0.0001f;
     sph_float time = 5.0f;
     std::string file_name_out = generateVTKFilename(0);
-    file_name_out = "../output/out_100k/" + file_name_out;
+    file_name_out = "../output/" + file_name_out;
     writeVTK(file_name_out, particles);
     sph_float total_time = 0;
     for (int t = 0; t < time / dt; t++)
