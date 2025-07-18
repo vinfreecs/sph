@@ -41,6 +41,7 @@ int main()
     // particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
     
     std::vector<particle> particles = fluid;
+    int nParticles = particles.size();
     particles.insert(particles.end(), boundary.begin(), boundary.end());
 
 

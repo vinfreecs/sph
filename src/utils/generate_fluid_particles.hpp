@@ -85,48 +85,6 @@ std::vector<particle> create_fixed_fluid_block_aks(int per_axis, double spacing,
     return particles_;
 }
 
-void write_particles_to_vtk(const std::string& filename, const std::vector<particle>& all_particles) {
-    std::filesystem::create_directories(std::filesystem::path(filename).parent_path());
-
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << filename << "\n";
-        return;
-    }
-
-    file << "# vtk DataFile Version 3.0\n";
-    file << "Fixed fluid 50k, enlarged solid cube\n";
-    file << "ASCII\n";
-    file << "DATASET POLYDATA\n";
-    file << "POINTS " << all_particles.size() << " float\n";
-
-    for (const auto& p : all_particles) {
-        file << p.pos_x << " " << p.pos_y << " " << p.pos_z << "\n";
-    }
-
-    file << "\nPOINT_DATA " << all_particles.size() << "\n";
-
-    file << "SCALARS mass float 1\n";
-    file << "LOOKUP_TABLE default\n";
-    for (const auto& p : all_particles) {
-        file << p.mass << "\n";
-    }
-
-    file << "\nSCALARS fixed int 1\n";
-    file << "LOOKUP_TABLE default\n";
-    for (const auto& p : all_particles) {
-        file << (p.fixed ? 1 : 0) << "\n";
-    }
-
-    file << "\nVECTORS velocity float\n";
-    for (const auto& p : all_particles) {
-        file << p.vel_x << " " << p.vel_y << " " << p.vel_z << "\n";
-    }
-
-    file.close();
-    std::cout << "💾 Wrote " << all_particles.size() << " particles to " << filename << "\n";
-}
-
 // int main() {
 //     // Reference spacing
 //     int ref_particles = 10000;
