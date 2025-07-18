@@ -39,7 +39,7 @@ __global__ void reset_forces(particle *particles, int n)
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
     {
-        if(!p.fixed){
+        if(!particles[i].fixed){
             particles[i].force_x = 0;
             particles[i].force_y = 0;
             particles[i].force_z = 0;

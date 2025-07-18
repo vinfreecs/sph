@@ -113,7 +113,7 @@ void readInput(const std::string &filename, int nParticles, std::vector<particle
     for (int i = 0; i < nParticles; i++)
     {
         particles[i].id = i;
-        particles[i].radius = radius;
+        particles[i].radius = radius_device;
         particles[i].fixed = false;
     }
 
