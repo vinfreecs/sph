@@ -11,18 +11,37 @@
 #include "utils/io.hpp"
 #include "utils/sph_cuda.hpp"
 #include "utils/cuda_error.hpp"
+#include "utils/generate_fluid_particles.hpp"
+
 
 
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
-    write_particles_cube_format("../input/pos_10000.txt", 10000, 0.5);
-    int nParticles = 10000;
-    std::vector<particle> particles(nParticles);
-    readInput("../input/pos_10000.txt", nParticles, particles);
+    // write_particles_cube_format("../input/pos_10000.txt", 10000, 0.5);
+    // int nParticles = 10000;
+    // std::vector<particle> particles(nParticles);
+    // readInput("../input/pos_10000.txt", nParticles, particles);
 
-    std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
-    particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
+    // std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
+    // particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
+
+    int ref_particles = 10000;
+    double ref_cube_size = 1.0;
+    int ref_axis = static_cast<int>(std::ceil(std::cbrt(ref_particles)));
+    double spacing = ref_cube_size / ref_axis;
+
+    double solid_cube_size = 3.0;     // Bigger domain
+    int fluid_per_axis = 41;          // ~50,000 fluid particles
+
+    
+    auto boundary = create_boundary_particles_3d_aks(solid_cube_size, spacing);
+    auto fluid = create_fixed_fluid_block_aks(fluid_per_axis, spacing, solid_cube_size);
+    // std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
+    // particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
+    
+    std::vector<particle> particles = fluid;
+    particles.insert(particles.end(), boundary.begin(), boundary.end());
 
 
     std::vector<int> neighbours(particles.size(), -1);
