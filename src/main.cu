@@ -16,10 +16,14 @@
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
-    // write_particles_cube_format("../input/pos_150.txt", 150, 0.5);
-    int nParticles = 100000;
+    write_particles_cube_format("../input/pos_10000.txt", 10000, 0.5);
+    int nParticles = 10000;
     std::vector<particle> particles(nParticles);
-    readInput("../input/pos_100000.txt", nParticles, particles);
+    readInput("../input/pos_10000.txt", nParticles, particles);
+
+    std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
+    particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
+
 
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
@@ -46,8 +50,8 @@ int main()
     int threadsPerBlock = 256;
     int blocksPerGrid = (nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
-    sph_float dt = 0.01f;
-    sph_float time = 10.0f;
+    sph_float dt = 0.0001f;
+    sph_float time = 5.0f;
     std::string file_name_out = generateVTKFilename(0);
     file_name_out = "../output/out_100k/" + file_name_out;
     writeVTK(file_name_out, particles);
@@ -75,12 +79,18 @@ int main()
         std::chrono::duration<double> elapsed = end - start;
         total_time += elapsed.count();
 
-        if (t % 50 == 0)
+        if (t % 500 == 0)
         {
             cudaMemcpy(particles.data(), d_particles, size_particles, cudaMemcpyDeviceToHost);
             std::string file_name = generateVTKFilename(t + 1);
-            file_name = "../output/out_100k/" + file_name;
+            file_name = "../output/" + file_name;
+            auto start_write_vtk = std::chrono::high_resolution_clock::now();
             writeVTK(file_name, particles);
+            auto end_write_vtk = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed_write_vtk = end_write_vtk - start_write_vtk;
+            sph_float total_time_write_vtk = elapsed_write_vtk.count();
+            std::cout << "Time Taken to write vtk :" << total_time_write_vtk << std::endl;
+            std::cout << "Time Taken for "<<t <<" steps : "<< total_time << std::endl;
         }
     }
 

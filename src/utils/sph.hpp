@@ -94,9 +94,9 @@ void pressure_viscosity_force(particle &p, particle &q)
     // if (r < 1e-5)
     //     r = 1e-5; // to avoid division by zero
     // Calculate the force due to pressure and viscosity
-if (q.fixed)
+    if (q.fixed)
     {
-        sph_float min_distance = p.radius + q.radius+0.01; // assuming both particles have the same radius
+        sph_float min_distance = p.radius + q.radius + 0.01; // assuming both particles have the same radius
         sph_float actual_distance = std::sqrt(distance_squared(p, q));
 
         if (actual_distance <= min_distance)
@@ -117,13 +117,11 @@ if (q.fixed)
             p.pos_y += dy * penetration;
             p.pos_z += dz * penetration;
 
-
             // Reflect velocity
             sph_float v_dot_n = p.vel_x * dx + p.vel_y * dy + p.vel_z * dz;
             p.vel_x -= 1.0f * v_dot_n * dx;
             p.vel_y -= 1.0f * v_dot_n * dy;
             p.vel_z -= 1.0f * v_dot_n * dz;
-
 
             // // Optionally apply damping or restitution
             // float damping = 1.0f; // energy loss on collision
