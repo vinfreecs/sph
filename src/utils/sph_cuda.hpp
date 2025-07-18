@@ -50,7 +50,7 @@ __global__ void reset_forces(particle *particles, int n)
 __device__ void boundary_navie(particle &p, double bounce_factor = 0.25)
 {
     double hole_size = 0.5;
-    int boundary = 25;
+    int boundary = 10;
     double half_boundary = boundary / 2.0;
     double half_hole = hole_size / 2.0;
 
@@ -102,41 +102,41 @@ __device__ void pressure_viscosity_force(particle &p, const particle &q)
     if (r < 1e-5)
         r = 1e-5; // to avoid division by zero
 
-    if (q.fixed)
-    {
-        sph_float min_distance = p.radius + q.radius + 0.01; // assuming both particles have the same radius
-        sph_float actual_distance = std::sqrt(distance_squared(p, q));
+    // if (q.fixed)
+    // {
+    //     sph_float min_distance = p.radius + q.radius + 0.01; // assuming both particles have the same radius
+    //     sph_float actual_distance = std::sqrt(distance_squared(p, q));
 
-        if (actual_distance <= min_distance)
-        {
-            // Normalize direction vector from q to p
-            sph_float dx = p.pos_x - q.pos_x;
-            sph_float dy = p.pos_y - q.pos_y;
-            sph_float dz = p.pos_z - q.pos_z;
+    //     if (actual_distance <= min_distance)
+    //     {
+    //         // Normalize direction vector from q to p
+    //         sph_float dx = p.pos_x - q.pos_x;
+    //         sph_float dy = p.pos_y - q.pos_y;
+    //         sph_float dz = p.pos_z - q.pos_z;
 
-            sph_float inv_dist = 1.0f / actual_distance;
-            dx *= inv_dist;
-            dy *= inv_dist;
-            dz *= inv_dist;
+    //         sph_float inv_dist = 1.0f / actual_distance;
+    //         dx *= inv_dist;
+    //         dy *= inv_dist;
+    //         dz *= inv_dist;
 
-            // Push particle outside the boundary
-            sph_float penetration = min_distance - actual_distance;
-            p.pos_x += dx * penetration;
-            p.pos_y += dy * penetration;
-            p.pos_z += dz * penetration;
+    //         // Push particle outside the boundary
+    //         sph_float penetration = min_distance - actual_distance;
+    //         p.pos_x += dx * penetration;
+    //         p.pos_y += dy * penetration;
+    //         p.pos_z += dz * penetration;
 
-            // Reflect velocity
-            sph_float v_dot_n = p.vel_x * dx + p.vel_y * dy + p.vel_z * dz;
-            p.vel_x -= 1.0f * v_dot_n * dx;
-            p.vel_y -= 1.0f * v_dot_n * dy;
-            p.vel_z -= 1.0f * v_dot_n * dz;
+    //         // Reflect velocity
+    //         sph_float v_dot_n = p.vel_x * dx + p.vel_y * dy + p.vel_z * dz;
+    //         p.vel_x -= 1.0f * v_dot_n * dx;
+    //         p.vel_y -= 1.0f * v_dot_n * dy;
+    //         p.vel_z -= 1.0f * v_dot_n * dz;
 
-            // // Optionally apply damping or restitution
-            // float damping = 1.0f; // energy loss on collision
-            // p.vel_x *= damping;
-            // p.vel_y *= damping;
-        }
-    }
+    //         // // Optionally apply damping or restitution
+    //         // float damping = 1.0f; // energy loss on collision
+    //         // p.vel_x *= damping;
+    //         // p.vel_y *= damping;
+    //     }
+    // }
 
     sph_float w_r_pressure = smoothing_pressure(r);
     sph_float w_r_viscosity = smoothing_viscosity(r);
