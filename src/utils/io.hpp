@@ -12,7 +12,10 @@ void writeVTK(const std::string &filename, std::vector<particle> &particles)
         return;
     }
 
-    const size_t numParticles = particles.size();
+    size_t numParticles = 0;
+    for (auto &p : particles)
+        if (!p.fixed)
+            ++numParticles;
 
     out << "# vtk DataFile Version 4.0\n";
     out << "hesp visualization file\n";
@@ -23,6 +26,8 @@ void writeVTK(const std::string &filename, std::vector<particle> &particles)
     out << std::fixed << std::setprecision(6);
     for (auto particle : particles)
     {
+        if (particle.fixed)
+            continue;
         double x = particle.pos_x;
         double y = particle.pos_y;
         double z = particle.pos_z;
@@ -38,6 +43,8 @@ void writeVTK(const std::string &filename, std::vector<particle> &particles)
     out << "LOOKUP_TABLE default\n";
     for (auto m : particles)
     {
+        if (m.fixed)
+            continue;
         out << m.mass << "\n";
     }
 
@@ -45,6 +52,8 @@ void writeVTK(const std::string &filename, std::vector<particle> &particles)
     out << "VECTORS v double\n";
     for (auto particle : particles)
     {
+        if (particle.fixed)
+            continue;
         double vx = particle.vel_x;
         double vy = particle.vel_y;
         double vz = particle.vel_z;
@@ -99,14 +108,14 @@ void readInput(const std::string &filename, int nParticles, std::vector<particle
     for (int i = 0; i < nParticles; ++i)
     {
         file >> particles[i].vel_x >> particles[i].vel_y >> particles[i].vel_z;
-
     }
 
-    for(int i=0; i<nParticles;i++){
+    for (int i = 0; i < nParticles; i++)
+    {
         particles[i].id = i;
+        particles[i].radius = radius;
+        particles[i].fixed = false;
     }
-    
 
     file.close();
 }
-

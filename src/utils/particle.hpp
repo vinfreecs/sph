@@ -1,14 +1,15 @@
-class particle{
+class particle
+{
 public:
     int id;
-    int bucket_id=-1; // For neighbour search
-    float pos_x, pos_y, pos_z;
-    float vel_x, vel_y, vel_z;
-    float mass;
-    float density;
-    float pressure;
-    float force_x, force_y, force_z;
-    bool is_boundary=false;
+    sph_float radius;
+    sph_float pos_x, pos_y, pos_z;
+    sph_float vel_x, vel_y, vel_z;
+    sph_float mass;
+    sph_float density;
+    sph_float pressure;
+    sph_float force_x, force_y, force_z;
+    bool fixed;
 };
 
 void write_particles_cube_format(
@@ -57,5 +58,57 @@ void write_particles_cube_format(
 
     file.close();
     std::cout << "Wrote " << total_particles << " particles to " << filename << "\n";
+}
+
+
+std::vector<particle> create_boundary_particles_3d(sph_float boundary_size, sph_float r_e_b, float overlap_factor = 0.2f)
+{
+    std::vector<particle> boundary_particles;
+
+    sph_float spacing = r_e_b * overlap_factor; // reduce spacing to overlap
+    int num_per_axis = boundary_size / spacing;
+    sph_float half_size = boundary_size / 2.0f;
+
+    for (int i = 0; i <= num_per_axis; ++i)
+    {
+        for (int j = 0; j <= num_per_axis; ++j)
+        {
+            for (int k = 0; k <= num_per_axis; ++k)
+            {
+                sph_float x = -half_size + i * spacing;
+                sph_float y = -half_size + j * spacing;
+                sph_float z = -half_size + k * spacing;
+
+                // If the particle is on any boundary face
+                bool is_border = (
+                    i == 0 || i == num_per_axis ||
+                    j == 0 || j == num_per_axis ||
+                    k == 0 || k == num_per_axis
+                );
+
+                if (is_border)
+                {
+                    particle p;
+                    p.pos_x = x;
+                    p.pos_y = y;
+                    p.pos_z = z;
+                    p.vel_x = 0.0f;
+                    p.vel_y = 0.0f;
+                    p.vel_z = 0.0f;
+                    p.mass = 1.0f;
+                    p.density = 7870.0f;
+                    p.pressure = 0.0f;
+                    p.force_x = 0.0f;
+                    p.force_y = 0.0f;
+                    p.force_z = 0.0f;
+                    p.fixed = true;
+                    p.radius = r_e_b / 2.0f;
+                    boundary_particles.push_back(p);
+                }
+            }
+        }
+    }
+
+    return boundary_particles;
 }
 
