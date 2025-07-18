@@ -286,7 +286,7 @@ __global__ void calculate_force_hash_kernel(
         }
     }
 
-    p.force_y -= p.density * gravity;
+    p.force_z -= p.density * gravity;
 }
 
 
