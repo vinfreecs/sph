@@ -50,6 +50,7 @@ __global__ void reset_forces(particle *particles, int n)
 __device__ void boundary_navie(particle &p, double bounce_factor = 0.25)
 {
     double hole_size = 0.5;
+    int boundary = 25;
     double half_boundary = boundary / 2.0;
     double half_hole = hole_size / 2.0;
 
