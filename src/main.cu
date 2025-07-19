@@ -26,21 +26,31 @@ int main()
     // std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
     // particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
 
-    int ref_particles = 10000;
-    double ref_cube_size = 1.0;
-    int ref_axis = static_cast<int>(std::ceil(std::cbrt(ref_particles)));
-    double spacing = ref_cube_size / ref_axis;
+    std::vector<particle> particles = create_fluid_sphere_particles_3d(1,r_e);
 
-    double solid_cube_size = 3.0;     // Bigger domain
-    int fluid_per_axis = 41;          // ~50,000 fluid particles
+    particle bigCircle;
+    bigCircle.pos_x = 0;
+    bigCircle.pos_y = 0;
+    bigCircle.pos_z = -1;
 
+    bigCircle.vel_x = 0.0f;
+    bigCircle.vel_y = 0.0f;
+    bigCircle.vel_z = 0.0f;
+
+    bigCircle.mass = 1.0f;
+    bigCircle.density = 999.0f;
+    bigCircle.pressure = 0.0f;
+    bigCircle.force_x = 0.0f;
+    bigCircle.force_y = 0.0f;
+    bigCircle.force_z = 0.0f;
+
+    bigCircle.fixed = true;
+    bigCircle.radius =1.0f;
+    particles.push_back(bigCircle);
     
-    auto boundary = create_boundary_particles_3d_aks(solid_cube_size, spacing);
-    auto fluid = create_fixed_fluid_block_aks(fluid_per_axis, spacing, solid_cube_size);
-    // std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
-    // particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
-    
-    std::vector<particle> particles = fluid;
+
+
+    std::vector<particle> boundary_vec = create_boundary_particles_3d(8, r_e_b);
     int nParticles = particles.size();
     particles.insert(particles.end(), boundary.begin(), boundary.end());
 

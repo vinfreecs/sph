@@ -112,3 +112,48 @@ std::vector<particle> create_boundary_particles_3d(sph_float boundary_size, sph_
     return boundary_particles;
 }
 
+std::vector<particle> create_fluid_sphere_particles_3d(
+    sph_float sphere_radius, sph_float r_e)
+{
+    std::vector<particle> fluid_particles;
+
+    sph_float spacing = r_e;  // Proper spacing for fluid
+    int num_per_axis = static_cast<int>((2.0f * sphere_radius) / spacing);
+    sph_float half_extent = num_per_axis * spacing / 2.0f;
+
+    for (int i = 0; i <= num_per_axis; ++i)
+    {
+        for (int j = 0; j <= num_per_axis; ++j)
+        {
+            for (int k = 0; k <= num_per_axis; ++k)
+            {
+                sph_float x = -half_extent + i * spacing;
+                sph_float y = -half_extent + j * spacing;
+                sph_float z = -half_extent + k * spacing;
+
+                // Only keep particles within the sphere radius
+                if (x*x + y*y + z*z <= sphere_radius * sphere_radius)
+                {
+                    particle p;
+                    p.pos_x = x;
+                    p.pos_y = y;
+                    p.pos_z = z+1.5;
+                    p.vel_x = 0.0f;
+                    p.vel_y = 0.0f;
+                    p.vel_z = 0.0f;
+                    p.mass = 1.0f;
+                    p.density = 998.29f; // typical density of water
+                    p.pressure = 0.0f;
+                    p.force_x = 0.0f;
+                    p.force_y = 0.0f;
+                    p.force_z = 0.0f;
+                    p.fixed = false; // it's a fluid particle
+                    p.radius = r_e / 2.0f; // or whatever makes sense in your kernel
+                    fluid_particles.push_back(p);
+                }
+            }
+        }
+    }
+
+    return fluid_particles;
+}
