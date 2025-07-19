@@ -256,7 +256,7 @@ void calculate_force_hash(std::vector<particle> &particles,
                         int j = neighbours[cell_id];
                         while (j != -1)
                         {
-                            if (i < j)
+                            if (i != j)
                             {
                                 particle &q = particles[j];
 
@@ -273,7 +273,7 @@ void calculate_force_hash(std::vector<particle> &particles,
                 }
             }
         }
-        p.force_y -= p.density * gravity; // gravity only in the -ve z direction
+        p.force_z -= p.density * gravity; // gravity only in the -ve z direction
     }
 }
 

@@ -35,9 +35,9 @@ void write_particles_cube_format(
     for (int i = 0; i < particles_per_axis && particles_written < total_particles; ++i) {
         for (int j = 0; j < particles_per_axis && particles_written < total_particles; ++j) {
             for (int k = 0; k < particles_per_axis && particles_written < total_particles; ++k) {
-                double x = i * spacing + spacing/2;  // Center particles in their cells
-                double y = j * spacing + spacing/2;
-                double z = k * spacing + spacing/2;
+                double x = i * spacing + spacing/2 - cube_size/2;  // Center particles in their cells
+                double y = j * spacing + spacing/2 - cube_size/2;
+                double z = k * spacing + spacing/2 + cube_size/2;
                 file << x << " " << y << " " << z << "\n";
                 particles_written++;
             }
@@ -137,7 +137,7 @@ std::vector<particle> create_fluid_sphere_particles_3d(
                     particle p;
                     p.pos_x = x;
                     p.pos_y = y;
-                    p.pos_z = z+1.5;
+                    p.pos_z = z;
                     p.vel_x = 0.0f;
                     p.vel_y = 0.0f;
                     p.vel_z = 0.0f;

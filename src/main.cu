@@ -11,60 +11,25 @@
 #include "utils/io.hpp"
 #include "utils/sph_cuda.hpp"
 #include "utils/cuda_error.hpp"
-#include "utils/generate_fluid_particles.hpp"
-
 
 
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
-    // write_particles_cube_format("../input/pos_10000.txt", 10000, 0.5);
-    // int nParticles = 10000;
-    // std::vector<particle> particles(nParticles);
-    // readInput("../input/pos_10000.txt", nParticles, particles);
+    write_particles_cube_format("../input/pos_10000.txt", 10000, 0.5);
+    int nParticles = 10000;
+    std::vector<particle> particles(nParticles);
+    readInput("../input/pos_10000.txt", nParticles, particles);
 
-    // std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
-    // particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
-
-std::vector<particle> particles = create_fluid_sphere_particles_3d(1,0.04);
-
-    std::cout<<"Num of particles before :"<<particles.size()<<std::endl;
-
-    particle bigCircle;
-    bigCircle.pos_x = 0;
-    bigCircle.pos_y = 0;
-    bigCircle.pos_z = -1;
-
-    bigCircle.vel_x = 0.0f;
-    bigCircle.vel_y = 0.0f;
-    bigCircle.vel_z = 0.0f;
-
-    bigCircle.mass = 1.0f;
-    bigCircle.density = 999.0f;
-    bigCircle.pressure = 0.0f;
-    bigCircle.force_x = 0.0f;
-    bigCircle.force_y = 0.0f;
-    bigCircle.force_z = 0.0f;
-
-    bigCircle.fixed = true;
-    bigCircle.radius =1.0f;
-    particles.push_back(bigCircle);
-
-    std::cout<<"Num of particles middle :"<<particles.size()<<std::endl;
-
-    
-
-
-    std::vector<particle> boundary_vec = create_boundary_particles_3d(8, r_e_b);
+    std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
     particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
-
-    std::cout<<"Num of particles after :"<<particles.size()<<std::endl;
 
 
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
+    std::cout<<"Num of particles before :"<<nParticles<<std::endl;
 
-    int nParticles = particles.size();
+    nParticles = particles.size();
     std::cout<<"Num of particles after :"<<nParticles<<std::endl;
 
     particle *d_particles;

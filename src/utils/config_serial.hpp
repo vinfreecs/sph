@@ -9,4 +9,4 @@ sph_float k = 50;
 sph_float rho_o = 30;
 sph_float rest_pressure = 0;
 sph_float radius_device = 0.03;
-int boundary = 15;
+int boundary = 3;
