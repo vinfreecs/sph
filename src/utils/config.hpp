@@ -14,7 +14,7 @@ extern __constant__ int boundary = 15;
 sph_float time_step = 0.0001f;
 sph_float total_time = 5.0f;
 
-sph_float output_freq = 500.0f;
+int output_freq = 500.0f;
 
 sph_float radius_device = 0.03; 
 

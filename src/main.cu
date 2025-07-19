@@ -16,9 +16,9 @@
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
-    int nParticles = 10000;
-    std::string filename = "../input/pos_"+nParticles+".txt";
-    write_particles_cube_format(filename, 10000, 0.5); //to write fluid particles in a cube format
+    int nParticles = 50000;
+    std::string filename = "../input/pos_"+std::to_string(nParticles)+".txt";
+    write_particles_cube_format(filename, nParticles, 0.5); //to write fluid particles in a cube format
     std::vector<particle> particles(nParticles);
     readInput(filename, nParticles, particles);
 
