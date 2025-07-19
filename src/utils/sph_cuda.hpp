@@ -104,7 +104,7 @@ __device__ void pressure_viscosity_force(particle &p, const particle &q)
 
     if (q.fixed)
     {
-        sph_float min_distance = p.radius + q.radius + 0.01; // assuming both particles have the same radius
+        sph_float min_distance = p.radius + q.radius; // assuming both particles have the same radius
         sph_float actual_distance = std::sqrt(distance_squared(p, q));
 
         if (actual_distance <= min_distance)

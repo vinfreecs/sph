@@ -26,7 +26,9 @@ int main()
     // std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
     // particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
 
-    std::vector<particle> particles = create_fluid_sphere_particles_3d(1,r_e);
+std::vector<particle> particles = create_fluid_sphere_particles_3d(1,0.04);
+
+    std::cout<<"Num of particles before :"<<particles.size()<<std::endl;
 
     particle bigCircle;
     bigCircle.pos_x = 0;
@@ -47,19 +49,22 @@ int main()
     bigCircle.fixed = true;
     bigCircle.radius =1.0f;
     particles.push_back(bigCircle);
+
+    std::cout<<"Num of particles middle :"<<particles.size()<<std::endl;
+
     
 
 
     std::vector<particle> boundary_vec = create_boundary_particles_3d(8, r_e_b);
-    int nParticles = particles.size();
-    particles.insert(particles.end(), boundary.begin(), boundary.end());
+    particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
+
+    std::cout<<"Num of particles after :"<<particles.size()<<std::endl;
 
 
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
-    std::cout<<"Num of particles before :"<<nParticles<<std::endl;
 
-    nParticles = particles.size();
+    int nParticles = particles.size();
     std::cout<<"Num of particles after :"<<nParticles<<std::endl;
 
     particle *d_particles;
