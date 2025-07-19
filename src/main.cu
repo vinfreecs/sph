@@ -16,31 +16,31 @@
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
-    write_particles_cube_format("../input/pos_10000.txt", 10000, 0.5);
     int nParticles = 10000;
+    std::string filename = "../input/pos_"+nParticles+".txt";
+    write_particles_cube_format(filename, 10000, 0.5); //to write fluid particles in a cube format
     std::vector<particle> particles(nParticles);
-    readInput("../input/pos_10000.txt", nParticles, particles);
+    readInput(filename, nParticles, particles);
 
+    //to get boundary particles and attach them to particles
     std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
     particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
 
-
+    //initializing neighors/cell head and next
     std::vector<int> neighbours(particles.size(), -1);
     std::vector<int> particle_neighbours(particles.size(),-1);
-    std::cout<<"Num of particles before :"<<nParticles<<std::endl;
 
     nParticles = particles.size();
-    std::cout<<"Num of particles after :"<<nParticles<<std::endl;
 
+    //intitializing array for cuda /device
     particle *d_particles;
-
     int *d_neighbours;
-
     int *d_particle_neighbours;
 
     size_t size_particles = nParticles * sizeof(particle);
     size_t size_int = nParticles * sizeof(int);
 
+    //allocating memory and copying the dat from host to device
     checkCudaError(cudaMalloc(&d_particles, size_particles));
     checkCudaError(cudaMalloc(&d_neighbours, size_int));
     checkCudaError(cudaMalloc(&d_particle_neighbours, size_int));
@@ -50,12 +50,15 @@ int main()
     checkCudaError(cudaMemcpy(d_particle_neighbours, particle_neighbours.data(), size_int, cudaMemcpyHostToDevice));
 
 
-
+    
     int threadsPerBlock = 256;
     int blocksPerGrid = (nParticles + threadsPerBlock - 1) / threadsPerBlock;
 
-    sph_float dt = 0.0001f;
-    sph_float time = 5.0f;
+    //the time step and total time
+    sph_float dt = time_step;
+    sph_float time = total_time;
+    
+    //writing the first orentation to get an idea of the orentation
     std::string file_name_out = generateVTKFilename(0);
     file_name_out = "../output/" + file_name_out;
     writeVTK(file_name_out, particles);
@@ -64,17 +67,23 @@ int main()
     {
         auto start = std::chrono::high_resolution_clock::now();
 
+        //cudaMemset to initialise the neighbors/cell head and next with -1 or else can write a kernal to intialize to -1
         checkCudaError(cudaMemset(d_neighbours, -1, size_int));
         checkCudaError(cudaMemset(d_particle_neighbours, -1, size_int));
 
+        //updating the cells 
         update_neighbors_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, d_neighbours, d_particle_neighbours, nParticles);
         checkCudaError(cudaDeviceSynchronize());
+
+        //kernal to calculate density and then the pressure
         compute_density_pressure_hash_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, d_neighbours, d_particle_neighbours, nParticles);
         checkCudaError(cudaDeviceSynchronize());
         // removed reset as alredy setting force to zero in force kernel
-
+        //calculating internal(pressure and viscous) and external forces(gravity)
         calculate_force_hash_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, d_neighbours, d_particle_neighbours, nParticles);
         checkCudaError(cudaDeviceSynchronize());
+
+        //updating the velocity and position using euler method
         update_velocity_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, nParticles, dt);
         checkCudaError(cudaDeviceSynchronize());
         update_positions_kernel<<<blocksPerGrid, threadsPerBlock>>>(d_particles, nParticles, dt);
@@ -83,7 +92,9 @@ int main()
         std::chrono::duration<double> elapsed = end - start;
         total_time += elapsed.count();
 
-        if (t % 500 == 0)
+
+        //to write vtk output for every x number of iterations
+        if (t % output_freq == 0)
         {
             cudaMemcpy(particles.data(), d_particles, size_particles, cudaMemcpyDeviceToHost);
             std::string file_name = generateVTKFilename(t + 1);
@@ -98,6 +109,7 @@ int main()
         }
     }
 
+    //imp to free the allocated mem
     checkCudaError(cudaFree(d_particles));
     checkCudaError(cudaFree(d_neighbours));
     checkCudaError(cudaFree(d_particle_neighbours));

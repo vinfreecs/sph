@@ -49,6 +49,8 @@ __global__ void reset_forces(particle *particles, int n)
 
 __device__ void boundary_navie(particle &p, double bounce_factor = 0.25)
 {
+
+    //just a fall back basic boundary condition which is very high = 15 m side
     double hole_size = 0.5;
     int boundary = 10;
     double half_boundary = boundary / 2.0;
@@ -102,12 +104,13 @@ __device__ void pressure_viscosity_force(particle &p, const particle &q)
     if (r < 1e-5)
         r = 1e-5; // to avoid division by zero
 
+        //to calculate the penetration and change the velocity direction and magnitude of the fluid particle
     if (q.fixed)
     {
         sph_float min_distance = p.radius + q.radius; // assuming both particles have the same radius
         sph_float actual_distance = std::sqrt(distance_squared(p, q));
-
-        if (actual_distance <= min_distance)
+        //only happens if there is penetration
+        if (actual_distance < min_distance)
         {
             // Normalize direction vector from q to p
             sph_float dx = p.pos_x - q.pos_x;
@@ -131,13 +134,14 @@ __device__ void pressure_viscosity_force(particle &p, const particle &q)
             p.vel_y -= 1.0f * v_dot_n * dy;
             p.vel_z -= 1.0f * v_dot_n * dz;
 
-            // // Optionally apply damping or restitution
+            
             // float damping = 1.0f; // energy loss on collision
             // p.vel_x *= damping;
             // p.vel_y *= damping;
         }
     }
 
+    //calculation of internal forces
     sph_float w_r_pressure = smoothing_pressure(r);
     sph_float w_r_viscosity = smoothing_viscosity(r);
 
@@ -158,22 +162,26 @@ __device__ void pressure_viscosity_force(particle &p, const particle &q)
     p.force_z += -force_pressure_z + dynamic_viscosity * force_viscosity_z;
 }
 
+
+//to get the unique cell_id by using spatial hasing method
 __device__ int get_hash(int cell_x, int cell_y, int cell_z)
 {
     return (cell_x * 9283711) ^ (cell_y * 689287499) ^ (cell_z * 283923481);
 }
 
+
+//neighbouring lists
 __global__ void update_neighbors_kernel(
     particle *particles,
     int *neighbours,
     int *particle_neighbours,
     int num_particles)
 {
-    // the intialsization of neighbours and particle_neig should be done in a different kernal or use
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= num_particles)
         return;
     particle p = particles[i];
+    //just shifting the coordinates but should work the same if removed but should be changed everywhere coordinates are calculated
     int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
     int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
     int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
@@ -181,7 +189,7 @@ __global__ void update_neighbors_kernel(
     int hash = get_hash(x, y, z);
     int cell_id = ((hash % num_particles) + num_particles) % num_particles;
 
-    // Atomically update hash table and get the previous value
+    // using 
     int previous = atomicExch(&neighbours[cell_id], i);
     particle_neighbours[i] = previous;
 }
@@ -206,6 +214,7 @@ __global__ void compute_density_pressure_hash_kernel(
         int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
         int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
 
+        //to loop over the neighbouring 27 cells
         for (int dx = -1; dx <= 1; ++dx)
         {
             for (int dy = -1; dy <= 1; ++dy)
@@ -319,5 +328,6 @@ __global__ void update_positions_kernel(particle* particles, int num_particles, 
 
     }
 
-    boundary_navie(p); // bounce off walls
+    //only used as a fall back 
+    //boundary_navie(p); // bounce off walls
 }

@@ -3,66 +3,6 @@ std::string generateVTKFilename(int frame)
     return "frame_" + std::to_string(frame) + ".vtk";
 }
 
-// void writeVTK(const std::string &filename, std::vector<particle> &particles)
-// {
-//     std::ofstream out(filename);
-//     if (!out.is_open())
-//     {
-//         std::cerr << "Failed to open file: " << filename << std::endl;
-//         return;
-//     }
-
-//     size_t numParticles = 0;
-//     for (auto &p : particles)
-//         if (!p.fixed)
-//             ++numParticles;
-
-//     out << "# vtk DataFile Version 4.0\n";
-//     out << "hesp visualization file\n";
-//     out << "ASCII\n";
-//     out << "DATASET UNSTRUCTURED_GRID\n";
-//     out << "POINTS " << numParticles << " double\n";
-
-//     out << std::fixed << std::setprecision(6);
-//     for (auto particle : particles)
-//     {
-//         if (particle.fixed)
-//             continue;
-//         double x = particle.pos_x;
-//         double y = particle.pos_y;
-//         double z = particle.pos_z;
-//         out << x << " " << y << " " << z << "\n";
-//     }
-
-//     out << "CELLS 0 0\n";
-//     out << "CELL_TYPES 0\n";
-//     out << "POINT_DATA " << numParticles << "\n";
-
-//     // Write masses
-//     out << "SCALARS m double\n";
-//     out << "LOOKUP_TABLE default\n";
-//     for (auto m : particles)
-//     {
-//         if (m.fixed)
-//             continue;
-//         out << m.mass << "\n";
-//     }
-
-//     // Write velocities
-//     out << "VECTORS v double\n";
-//     for (auto particle : particles)
-//     {
-//         if (particle.fixed)
-//             continue;
-//         double vx = particle.vel_x;
-//         double vy = particle.vel_y;
-//         double vz = particle.vel_z;
-//         out << vx << " " << vy << " " << vz << "\n";
-//     }
-
-//     out.close();
-// }
-
 void writeVTK(const std::string &filename, std::vector<particle> &particles)
 {
     std::ofstream out(filename);
