@@ -16,7 +16,7 @@
 int main()
 {
     std::cout << "Starting SPH hash sim.." << std::endl;
-    int nParticles = 50000;
+    int nParticles = 10000;
     std::string filename = "../input/pos_"+std::to_string(nParticles)+".txt";
     write_particles_cube_format(filename, nParticles, 0.5); //to write fluid particles in a cube format
     std::vector<particle> particles(nParticles);
@@ -25,6 +25,24 @@ int main()
     //to get boundary particles and attach them to particles
     std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
     particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
+
+    //uncomment this to add obstacles
+    // particle bigCircle;
+    // bigCircle.pos_x = 0;
+    // bigCircle.pos_y = 0;
+    // bigCircle.pos_z = 0;
+    // bigCircle.vel_x = 0.0f;
+    // bigCircle.vel_y = 0.0f;
+    // bigCircle.vel_z = 0.0f;
+    // bigCircle.mass = 1.0f;
+    // bigCircle.density = 999.0f;
+    // bigCircle.pressure = 0.0f;
+    // bigCircle.force_x = 0.0f;
+    // bigCircle.force_y = 0.0f;
+    // bigCircle.force_z = 0.0f;
+    // bigCircle.fixed = true;
+    // bigCircle.radius = 0.25f;
+    // particles.push_back(bigCircle);
 
     //initializing neighors/cell head and next
     std::vector<int> neighbours(particles.size(), -1);
