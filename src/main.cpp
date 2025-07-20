@@ -48,6 +48,7 @@ int main()
     std::cout << "Num of particles middle :" << particles.size() << std::endl;
 
     std::vector<particle> boundary_vec = create_boundary_particles_3d(1.5, r_e_b);
+    std::cout << "Num of parti boundary :" << boundary_vec.size() << std::endl;
     particles.insert(particles.end(), boundary_vec.begin(), boundary_vec.end());
 
     std::cout << "Num of particles after :" << particles.size() << std::endl;
@@ -63,61 +64,61 @@ int main()
     sph_float total_time = 0;
     update_neighbors(particles, neighbours, particle_neighbours);
 
-    for (int t = 0; t < time / dt; t++)
-    {
-        static int particle_creation_counter = 0;
-        particle_creation_counter++;
-        auto start = std::chrono::high_resolution_clock::now();
-        if (particle_creation_counter % 1 == 0 && particle_creation_counter <2000)
-        {
-            particle p;
-            p.pos_x = 0;
-            p.pos_y = 0;
-            p.pos_z = 0.5f;
-            p.vel_x = 0.0f;
-            p.vel_y = 0.0f;
-            p.vel_z = -3.0f;
-            p.mass = 1.0f;
-            p.density = 0.0f;
-            p.pressure = 0.0f;
-            p.force_x = 0.0f;
-            p.force_y = 0.0f;
-            p.force_z = 0.0f;
-            p.fixed = false;
-            p.radius = 0.03f;
+    // for (int t = 0; t < time / dt; t++)
+    // {
+    //     static int particle_creation_counter = 0;
+    //     particle_creation_counter++;
+    //     auto start = std::chrono::high_resolution_clock::now();
+    //     if (particle_creation_counter % 1 == 0 && particle_creation_counter <2000)
+    //     {
+    //         particle p;
+    //         p.pos_x = 0;
+    //         p.pos_y = 0;
+    //         p.pos_z = 0.5f;
+    //         p.vel_x = 0.0f;
+    //         p.vel_y = 0.0f;
+    //         p.vel_z = -3.0f;
+    //         p.mass = 1.0f;
+    //         p.density = 0.0f;
+    //         p.pressure = 0.0f;
+    //         p.force_x = 0.0f;
+    //         p.force_y = 0.0f;
+    //         p.force_z = 0.0f;
+    //         p.fixed = false;
+    //         p.radius = 0.03f;
 
-            particles.push_back(p);
-            neighbours.resize(particles.size(), -1);
-            particle_neighbours.resize(particles.size(), -1);
-        }
-        update_neighbors(particles, neighbours, particle_neighbours);
+    //         particles.push_back(p);
+    //         neighbours.resize(particles.size(), -1);
+    //         particle_neighbours.resize(particles.size(), -1);
+    //     }
+    //     update_neighbors(particles, neighbours, particle_neighbours);
 
-        calculation_density_pressure_hash(particles, neighbours, particle_neighbours);
-        // for(auto p:particles){
-        //     std::cout<<" Id: "<<p.id<<" Density : "<<p.density<<" pressure : "<<p.pressure<<" Force : "<<p.force_x<<std::endl;
-        // }
-        reset_forces(particles);
-        calculate_force_hash(particles, neighbours, particle_neighbours);
-        update_velocity(particles, dt);
-        update_positions(particles, dt);
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed = end - start;
-        total_time += elapsed.count();
-        if (t % 1 == 0)
-        {
+    //     calculation_density_pressure_hash(particles, neighbours, particle_neighbours);
+    //     // for(auto p:particles){
+    //     //     std::cout<<" Id: "<<p.id<<" Density : "<<p.density<<" pressure : "<<p.pressure<<" Force : "<<p.force_x<<std::endl;
+    //     // }
+    //     reset_forces(particles);
+    //     calculate_force_hash(particles, neighbours, particle_neighbours);
+    //     update_velocity(particles, dt);
+    //     update_positions(particles, dt);
+    //     auto end = std::chrono::high_resolution_clock::now();
+    //     std::chrono::duration<double> elapsed = end - start;
+    //     total_time += elapsed.count();
+    //     if (t % 1 == 0)
+    //     {
 
-            std::string file_name = generateVTKFilename(t + 1);
-            file_name = "../output/" + file_name;
+    //         std::string file_name = generateVTKFilename(t + 1);
+    //         file_name = "../output/" + file_name;
 
-            auto start_write_vtk = std::chrono::high_resolution_clock::now();
-            writeVTK(file_name, particles);
-            auto end_write_vtk = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> elapsed_write_vtk = end_write_vtk - start_write_vtk;
-            sph_float total_time_write_vtk = elapsed_write_vtk.count();
-            std::cout << "Time Taken to write vtk :" << total_time_write_vtk << std::endl;
-            std::cout << "Time Taken for " << t << " steps : " << total_time << std::endl;
-        }
-    }
+    //         auto start_write_vtk = std::chrono::high_resolution_clock::now();
+    //         writeVTK(file_name, particles);
+    //         auto end_write_vtk = std::chrono::high_resolution_clock::now();
+    //         std::chrono::duration<double> elapsed_write_vtk = end_write_vtk - start_write_vtk;
+    //         sph_float total_time_write_vtk = elapsed_write_vtk.count();
+    //         std::cout << "Time Taken to write vtk :" << total_time_write_vtk << std::endl;
+    //         std::cout << "Time Taken for " << t << " steps : " << total_time << std::endl;
+    //     }
+    // }
     std::cout << "Total time taken for simulation : " << total_time << " seconds" << std::endl;
     std::cout << "Simulation completed." << std::endl;
 }
