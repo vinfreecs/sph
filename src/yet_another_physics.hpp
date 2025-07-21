@@ -1,12 +1,12 @@
 using sph_float = float;
 sph_float r_e = 0.04; // assuming 6 times of the radius
-sph_float r_e_b = 0.02;
+sph_float r_e_b = 0.008;
 sph_float PI = 3.14;
-sph_float dynamic_viscosity = 10;
-sph_float gravity = 0;
-sph_float radius = 0.01;
-sph_float k = 10;
-sph_float rho_o = 998;
+sph_float dynamic_viscosity = 0.0001;
+sph_float gravity = 9.8;
+sph_float radius = 0.008;
+sph_float k = 3;
+sph_float rho_o = 1000;
 sph_float rest_pressure = 0;
 int boundary = 2;
 
@@ -108,58 +108,53 @@ void pressure_viscosity_force(particle &p, particle &q, sph_float dt)
     //     r = 1e-6; // to avoid division by zero
     // Calculate the force due to pressure and viscosity
 
-    
-    if (q.fixed)
-    {
-        sph_float min_distance = 2.0f * radius; // assuming both particles have the same radius
-        sph_float actual_distance = std::sqrt(distance_squared(p, q));
+    // if (q.fixed)
+    // {
+    //     sph_float min_distance = p.radius + q.radius; // assuming both particles have the same radius
+    //     sph_float actual_distance = std::sqrt(distance_squared(p, q));
 
-        if (actual_distance < min_distance && actual_distance > 1e-6f)
-        {
-            // Normalize direction vector from q to p
-            sph_float dx = p.pos_x - q.pos_x;
-            sph_float dy = p.pos_y - q.pos_y;
-            sph_float inv_dist = 1.0f / actual_distance;
-            dx *= inv_dist;
-            dy *= inv_dist;
+    //     if (actual_distance <= min_distance)
+    //     {
+    //         // Normalize direction vector from q to p
+    //         sph_float dx = p.pos_x - q.pos_x;
+    //         sph_float dy = p.pos_y - q.pos_y;
+    //         sph_float inv_dist = 1.0f / actual_distance;
+    //         dx *= inv_dist;
+    //         dy *= inv_dist;
 
-            // Push particle outside the boundary
-            sph_float penetration = min_distance - actual_distance;
-            p.pos_x += dx * penetration;
-            p.pos_y += dy * penetration;
+    //         // Push particle outside the boundary
+    //         sph_float penetration = min_distance - actual_distance;
+    //         p.pos_x += dx * penetration;
+    //         p.pos_y += dy * penetration;
 
-            // Reflect velocity
-            sph_float v_dot_n = p.vel_x * dx + p.vel_y * dy;
-            p.vel_x -= 2.0f * v_dot_n * dx;
-            p.vel_y -= 2.0f * v_dot_n * dy;
+    //         // Reflect velocity
+    //         sph_float v_dot_n = p.vel_x * dx + p.vel_y * dy;
+    //         p.vel_x -= 1.0f * v_dot_n * dx;
+    //         p.vel_y -= 1.0f * v_dot_n * dy;
 
-            // // Optionally apply damping or restitution
-            // float damping = 0.80f; // energy loss on collision
-            // p.vel_x *= damping;
-            // p.vel_y *= damping;
-        }
-    }
+    //         // // Optionally apply damping or restitution
+    //         // float damping = 1.0f; // energy loss on collision
+    //         // p.vel_x *= damping;
+    //         // p.vel_y *= damping;
+    //     }
+    // }
 
-    if (!q.fixed)
-    {
         sph_float w_r_pressure = smoothing_pressure(r);
-    sph_float w_r_viscosity = smoothing_viscosity(r);
-    sph_float force_pressure_x = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_x - p.pos_x) / (2 * q.density * r); // TODO
-    sph_float force_pressure_y = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_y - p.pos_y) / (2 * q.density * r);
-    sph_float force_viscosity_x = q.mass * (q.vel_x - p.vel_x) * w_r_viscosity / (q.density);
-    sph_float force_viscosity_y = q.mass * (q.vel_y - p.vel_y) * w_r_viscosity / (q.density);
-    sph_float fx = -force_pressure_x + dynamic_viscosity * force_viscosity_x;
-    sph_float fy = -force_pressure_y + dynamic_viscosity * force_viscosity_y;
-    p.force_x += fx;
-    p.force_y += fy;
-    p.vel_x += p.force_x * dt / p.density;
-    p.vel_y += p.force_y * dt / p.density;
+        sph_float w_r_viscosity = smoothing_viscosity(r);
+        sph_float force_pressure_x = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_x - p.pos_x) / (2 * q.density * r); // TODO
+        sph_float force_pressure_y = q.mass * (p.pressure + q.pressure) * w_r_pressure * (q.pos_y - p.pos_y) / (2 * q.density * r);
+        sph_float force_viscosity_x = q.mass * (q.vel_x - p.vel_x) * w_r_viscosity / (q.density);
+        sph_float force_viscosity_y = q.mass * (q.vel_y - p.vel_y) * w_r_viscosity / (q.density);
+        sph_float fx = -force_pressure_x + dynamic_viscosity * force_viscosity_x;
+        sph_float fy = -force_pressure_y + dynamic_viscosity * force_viscosity_y;
+        p.force_x += fx;
+        p.force_y += fy;
+        if(!q.fixed){
 
-        q.force_x -= fx;
-        q.force_y -= fy;
-        q.vel_x += q.force_x * dt / q.density;
-        q.vel_y += q.force_y * dt / q.density;
-    }
+            q.force_x -= fx;
+            q.force_y -= fy;
+        }
+    
 }
 
 inline int get_hash(int x, int y)
@@ -219,6 +214,8 @@ void calculation_density_pressure_hash(std::vector<particle> &particles,
                         if (j != i || j == i)
                         {
                             particle &q = particles[j];
+                            // if (q.fixed)
+                            //     continue;
                             sph_float r = distance_squared(p, q);
                             sph_float w_r = smoothing_density(r);
                             p.density += q.mass * (w_r);
@@ -258,7 +255,7 @@ void calculate_force_hash(std::vector<particle> &particles,
                     int j = neighbours[cell_id];
                     while (j != -1)
                     {
-                        if (i < j)
+                        if (i != j)
                         {
                             particle &q = particles[j];
 
@@ -275,7 +272,6 @@ void calculate_force_hash(std::vector<particle> &particles,
             }
         }
         p.force_y -= p.density * gravity; // gravity only in the -ve z direction
-        p.vel_y += p.force_y * dt / p.density;
     }
 }
 
@@ -287,6 +283,20 @@ void reset_forces(std::vector<particle> &particles)
         {
             p.force_x = 0;
             p.force_y = 0;
+        }
+    }
+}
+
+void update_velocity(std::vector<particle> &particles, sph_float dt)
+{
+    for (auto &p : particles)
+    {
+        // std::cout <<"Force x :"<<p.force_x<<" y :"<<p.force_y<<" z :"<<p.force_z<<std::endl;
+        if (!p.fixed)
+        {
+
+            p.vel_x += p.force_x * dt / p.density;
+            p.vel_y += p.force_y * dt / p.density;
         }
     }
 }
@@ -355,6 +365,8 @@ void readInput(const std::string &filename, int nParticles, std::vector<particle
     {
         particles[i].id = i;
         particles[i].radius = radius;
+        particles[i].fixed = false;
+
     }
 
     file.close();
@@ -411,6 +423,10 @@ void write_particles_square_format(
     file.close();
     std::cout << "Wrote " << total_particles << " particles to " << filename << "\n";
 }
+
+// void add_particles(std::vector<particle> &particles,){
+
+// }
 
 std::vector<particle> create_boundary_particles_2d(sph_float boundary_size, sph_float r_e_b, float overlap_factor = 0.2f)
 {
