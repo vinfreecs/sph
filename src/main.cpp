@@ -177,7 +177,7 @@ int main()
     readInput("../input/particles_2d_1000.txt",1000,particles);
 
     // particles.insert(particles.end(),boundary_circle.begin(),boundary_circle.end());
-    //particles.insert(particles.end(),boundary_vec.begin(),boundary_vec.end());
+    particles.insert(particles.end(),boundary_vec.begin(),boundary_vec.end());
     particles.insert(particles.end(),boundary_circle_open.begin(),boundary_circle_open.end());
 
     std::vector<int> neighbours(particles.size(), -1);
