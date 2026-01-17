@@ -182,9 +182,13 @@ __global__ void update_neighbors_kernel(
         return;
     particle p = particles[i];
     //just shifting the coordinates but should work the same if removed but should be changed everywhere coordinates are calculated
-    int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
-    int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
-    int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
+    int x = (int)((p.pos_x) / r_e);
+    int y = (int)((p.pos_y) / r_e);
+    int z = (int)((p.pos_z) / r_e);
+
+    // int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
+    // int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
+    // int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
 
     int hash = get_hash(x, y, z);
     int cell_id = ((hash % num_particles) + num_particles) % num_particles;
@@ -210,9 +214,9 @@ __global__ void compute_density_pressure_hash_kernel(
     {
         p.density = 0;
         p.pressure = 0;
-        int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
-        int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
-        int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
+        int x = (int)((p.pos_x) / r_e);
+        int y = (int)((p.pos_y) / r_e);
+        int z = (int)((p.pos_z) / r_e);
 
         //to loop over the neighbouring 27 cells
         for (int dx = -1; dx <= 1; ++dx)
@@ -263,9 +267,9 @@ __global__ void calculate_force_hash_kernel(
         p.force_y = 0;
         p.force_z = 0;
     
-        int x = (int)((p.pos_x + boundary * 0.5f) / r_e);
-        int y = (int)((p.pos_y + boundary * 0.5f) / r_e);
-        int z = (int)((p.pos_z + boundary * 0.5f) / r_e);
+        int x = (int)((p.pos_x) / r_e);
+        int y = (int)((p.pos_y) / r_e);
+        int z = (int)((p.pos_z) / r_e);
     
         for (int dx = -1; dx <= 1; ++dx)
         {
